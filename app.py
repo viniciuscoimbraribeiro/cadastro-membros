@@ -1,14 +1,15 @@
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
-import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from datetime import date
+import os
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2 import service_account
+import pickle
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 import time
-
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪", layout="wide")
-
-# --- CONEXÃO COM GOOGLE SHEETS (Via Secrets) ---
-conn = st.connection("gsheets", type=GSheetsConnection)
 
 # --- FUNÇÃO AUXILIAR: Cálculo de Idade ---
 def calcular_idade(data_nasc):
@@ -17,68 +18,175 @@ def calcular_idade(data_nasc):
     today = date.today()
     return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
 
-# --- INTERFACE: LOGO E TÍTULO ---
+# 1. Conexão com Google Sheets
+def conectar_planilha():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("app-igreja-489815-20b366a946b6.json", scope)
+    client = gspread.authorize(creds)
+    return client.open_by_key("1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc").sheet1
+
+# 2. Conexão com Google Drive
+def conectar_drive_pessoal():
+    SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive']
+    creds = None
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+    return build('drive', 'v3', credentials=creds)
+
+# Funções de Folder e Upload
+def get_or_create_folder(service, name, parent_id=None):
+    query = f"name='{name}' and mimeType='application/vnd.google-apps.folder'"
+    if parent_id: query += f" and '{parent_id}' in parents"
+    results = service.files().list(q=query, fields="files(id)").execute()
+    files = results.get('files', [])
+    if files:
+        return files[0]['id']
+    else:
+        metadata = {'name': name, 'mimeType': 'application/vnd.google-apps.folder'}
+        if parent_id: metadata['parents'] = [parent_id]
+        folder = service.files().create(body=metadata, fields='id', supportsAllDrives=True).execute()
+        return folder['id']
+
+def upload_document(service, member_name, file):
+    root_id = "1mtwff3O05vvw1r_QcEovgW8CkhV0d1p7"
+    member_id = get_or_create_folder(service, member_name, parent_id=root_id)
+    os.makedirs("temp", exist_ok=True)
+    temp_path = os.path.join("temp", file.name)
+    with open(temp_path, "wb") as f:
+        f.write(file.getbuffer())
+    try:
+        metadata = {'name': file.name, 'parents': [member_id]}
+        media = MediaFileUpload(temp_path, resumable=True)
+        uploaded = service.files().create(body=metadata, media_body=media, fields='id, webViewLink').execute()
+        del media 
+        if os.path.exists(temp_path): os.remove(temp_path)
+        return uploaded.get('webViewLink')
+    except Exception as e:
+        if os.path.exists(temp_path):
+            try: os.remove(temp_path)
+            except: pass 
+        raise e
+
+# Configuração da página
+st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
+
+# Exibir o logo centralizado
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("logo_igreja.jpeg", width=200)
+    # Nota: O arquivo "logo_igreja.jpeg" deve estar na mesma pasta no GitHub
+    try:
+        st.image("logo_igreja.jpeg", width=200)
+    except:
+        st.warning("Arquivo de logo não encontrado.")
 
 st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
 
-# Navegação lateral
-aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta"])
+# CSS para remover sugestões de preenchimento e ajustar alinhamento da idade
+st.markdown("""
+    <style>
+    input { autocomplete: off; }
+    .age-box { display: flex; align-items: center; height: 100%; padding-top: 28px; }
+    </style>
+""", unsafe_allow_html=True)
+
+if 'form_id' not in st.session_state:
+    st.session_state['form_id'] = 0
+
+aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta", "📊 Estatísticas"])
 
 # --- ABA: NOVO CADASTRO ---
 if aba == "Novo Cadastro":
+    if 'sucesso' in st.session_state:
+        st.success("✅ Cadastro realizado com sucesso!")
+        st.components.v1.html("<script>window.parent.document.querySelector('.main').scrollTo(0,0);</script>", height=0)
+        del st.session_state['sucesso']
+
     st.header("📝 Formulário de Registro")
+    fid = st.session_state['form_id']
     
-    with st.form("cadastro_form", clear_on_submit=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            nome = st.text_input("Nome Completo")
-            nascimento = st.date_input("Data de Nascimento", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1))
-            endereco = st.text_input("Endereço")
-            profissao = st.text_input("Profissão")
-            rg = st.text_input("RG (Apenas números)")
-            cpf = st.text_input("CPF (Apenas números)")
-
-        with col2:
-            nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável")
-            nome_pai = st.text_input("Nome do Pai", value="Não Aplicável")
-            nome_mae = st.text_input("Nome da Mãe")
-            estado_civil = st.selectbox("Estado Civil", ["", "Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"])
-            pastor = st.text_input("Pastor Responsável")
-
-        observacoes = st.text_area("Observações")
+    col1, col2 = st.columns(2)
+    with col1:
+        nome = st.text_input("Nome Completo", key=f"nome_{fid}")
+        st.write("Data de Nascimento")
+        nascimento = st.date_input("Data de Nascimento", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), label_visibility="collapsed", key=f"nasc_{fid}")     
+        endereco = st.text_input("Endereço", key=f"end_{fid}")
+        profissao = st.text_input("Profissão", key=f"prof_{fid}")
         
-        submitted = st.form_submit_button("Salvar Cadastro")
-        
-        if submitted:
-            if not nome or not nascimento:
-                st.error("⚠️ Nome e Data de Nascimento são obrigatórios.")
-            else:
-                # Criar DataFrame com o novo registro
-                novo_membro = pd.DataFrame([{
-                    "Nome Completo": nome,
-                    "Data Nascimento": nascimento.strftime("%d/%m/%Y"),
-                    "Endereço": endereco,
-                    "Profissão": profissao,
-                    "RG": rg,
-                    "CPF": cpf,
-                    "Cônjuge": nome_conjuge,
-                    "Pai": nome_pai,
-                    "Mãe": nome_mae,
-                    "Estado Civil": estado_civil,
-                    "Pastor": pastor,
-                    "Observações": observacoes
-                }])
+        st.write("RG (Apenas números)")
+        rg_txt = st.text_input("RG", label_visibility="collapsed", key=f"rg_{fid}")
+        if rg_txt and not rg_txt.isdigit():
+            st.warning("⚠️ RG deve conter apenas números.")
+         
+        st.write("CPF (Apenas números)")
+        cpf_txt = st.text_input("CPF", label_visibility="collapsed", key=f"cpf_{fid}")
+        if cpf_txt and not cpf_txt.isdigit():
+            st.warning("⚠️ CPF deve conter apenas números.")
+
+    with col2:
+        nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
+        nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")
+        nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
+        estado_civil = st.selectbox("Estado Civil", ["", "Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
+        pastor = st.text_input("Pastor Responsável", key=f"past_{fid}")
+
+    st.divider()
+    st.subheader("👨‍👩‍👧‍👦 Informações dos Filhos")
+    tem_filhos = st.checkbox("Tem filhos?", key=f"has_kids_{fid}")
+    filhos_dados = [["Não Aplicável", "", 0] for _ in range(3)]
+    
+    if tem_filhos:
+        for i in range(3):
+            suffix = f"Filho(a) {i+1}"
+            if i == 0 or st.checkbox(f"Adicionar {suffix}?", key=f"chk_f{i+1}_{fid}"):
+                c1, c2, c3 = st.columns([2, 1, 1])
+                f_nome = c1.text_input(f"Nome {suffix}", key=f"f{i+1}n_{fid}")
+                f_nasc = c2.date_input(f"Nascimento {suffix}", value=None, min_value=date(1900, 1, 1), key=f"f{i+1}d_{fid}")
                 
-                # Ler dados atuais e adicionar o novo
-                dados_existentes = conn.read()
-                dados_atualizados = pd.concat([dados_existentes, novo_membro], ignore_index=True)
+                f_idade = calcular_idade(f_nasc) if f_nasc else 0
+                c3.markdown(f'<div class="age-box">', unsafe_allow_html=True)
+                c3.info(f"Idade: {f_idade}")
+                c3.markdown('</div>', unsafe_allow_html=True)
                 
-                # Salvar no Google Sheets
-                conn.update(data=dados_atualizados)
-                st.success("✅ Cadastro realizado com sucesso!")
+                if f_nome:
+                    filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade]
+
+    st.divider()
+    observacoes = st.text_area("Observações", key=f"obs_{fid}")
+    documento_file = st.file_uploader("Documentos (PDF, JPG, PNG)", type=["pdf", "jpg", "png", "jpeg"], key=f"file_{fid}")
+    
+    if st.button("Salvar Cadastro"):
+        if not nome or not nascimento or not nome_mae or not estado_civil:
+            st.error("⚠️ Preencha os campos obrigatórios (Nome, Nascimento, Mãe, Estado Civil).")
+        else:
+            try:
+                sheet = conectar_planilha()
+                drive_service = conectar_drive_pessoal()
+                doc_link = upload_document(drive_service, nome, documento_file) if documento_file else "Não Aplicável"
+                
+                nova_linha = [
+                    nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
+                    rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
+                    nome_conjuge, nome_pai, nome_mae, estado_civil,
+                    filhos_dados[0][0], filhos_dados[0][1], filhos_dados[0][2],
+                    filhos_dados[1][0], filhos_dados[1][1], filhos_dados[1][2],
+                    filhos_dados[2][0], filhos_dados[2][1], filhos_dados[2][2],
+                    pastor, observacoes or "Não Aplicável", doc_link
+                ]
+                sheet.append_row(nova_linha)
+                st.session_state['sucesso'] = True
+                st.session_state['form_id'] += 1
+                st.rerun()
+            except Exception as e:
+                st.error(f"Erro ao salvar: {e}")
 
 # --- ABA: CONSULTA ---
 elif aba == "🔍 Consulta":
@@ -86,16 +194,70 @@ elif aba == "🔍 Consulta":
     nome_busca = st.text_input("Digite o nome para pesquisar")
     
     if nome_busca:
-        df = conn.read()
-        # Filtra os dados
-        resultado = df[df['Nome Completo'].str.contains(nome_busca, case=False, na=False)]
-        
-        if not resultado.empty:
-            for i, linha in resultado.iterrows():
-                with st.expander(f"👤 {linha['Nome Completo']}"):
-                    st.write(f"**CPF:** {linha['CPF']} | **Nascimento:** {linha['Data Nascimento']}")
-                    st.write(f"**Endereço:** {linha['Endereço']}")
-                    st.write(f"**Pastor Responsável:** {linha['Pastor']}")
-                    st.info(f"**Obs:** {linha['Observações']}")
-        else:
-            st.warning("Nenhum membro encontrado.")
+        try:
+            sheet = conectar_planilha()
+            dados = sheet.get_all_values()
+            if len(dados) > 1:
+                registros = [[i + 2] + r for i, r in enumerate(dados[1:]) if nome_busca.lower() in r[0].lower()]
+                
+                if registros:
+                    for reg in registros:
+                        idx_linha, linha = reg[0], reg[1:]
+                        with st.expander(f"👤 {linha[0]}"):
+                            c1, c2, c3 = st.columns(3)
+                            with c1:
+                                st.markdown("### 📋 Dados Pessoais")
+                                st.write(f"**Nascimento:** {linha[1]}")
+                                st.write(f"**RG:** {linha[4]}")
+                                st.write(f"**CPF:** {linha[5]}")
+                                st.write(f"**Endereço:** {linha[2]}")
+                                st.write(f"**Profissão:** {linha[3]}")
+                            with c2:
+                                st.markdown("### 👨‍👩‍👧 Família")
+                                st.write(f"**Estado Civil:** {linha[9]}")
+                                st.write(f"**Cônjuge:** {linha[6]}")
+                                st.write(f"**Pai:** {linha[7]}")
+                                st.write(f"**Mãe:** {linha[8]}")
+                                st.write(f"**Filho 1:** {linha[10]} ({linha[12]} anos)")
+                            with c3:
+                                st.markdown("### ⛪ Igreja")
+                                st.write(f"**Pastor:** {linha[19]}")
+
+                            st.info(f"**Observações:** {linha[20]}")
+                            if len(linha) > 21 and linha[21] != "Não Aplicável": 
+                                st.link_button("📂 Abrir Documento no Drive", linha[21])
+                            
+                            st.divider()
+                            col_pri, col_ed, col_ex = st.columns(3)
+                            
+                            if col_pri.button("🖨️ Imprimir", key=f"print_{idx_linha}"):
+                                timestamp = time.time()
+                                html_script = f"""
+                                <script>
+                                    var content = "<h2>Ficha de Membro</h2><p><b>Nome:</b> {linha[0]}</p>";
+                                    var iFrame = document.createElement('iframe');
+                                    iFrame.style.position = 'absolute'; iFrame.style.top = '-1000px';
+                                    document.body.appendChild(iFrame);
+                                    var doc = iFrame.contentDocument;
+                                    doc.open(); doc.write(content); doc.close();
+                                    setTimeout(function() {{ iFrame.contentWindow.print(); }}, 500);
+                                </script>
+                                """
+                                st.components.v1.html(html_script, height=0)
+
+                            if col_ed.button("📝 Editar", key=f"ed_{idx_linha}"):
+                                st.session_state['editando_idx'] = idx_linha
+                                st.session_state['dados_edit'] = linha
+                            if col_ex.button("🗑️ Excluir", key=f"del_{idx_linha}"):
+                                sheet.delete_rows(idx_linha)
+                                st.success("Excluído!")
+                                st.rerun()
+                else:
+                    st.warning("Nenhum membro encontrado.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados: {e}")
+
+# --- ABA: ESTATÍSTICAS (Placeholder para manter a navegação funcionando) ---
+elif aba == "📊 Estatísticas":
+    st.header("📊 Estatísticas")
+    st.info("Funcionalidade em desenvolvimento.")
