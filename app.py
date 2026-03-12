@@ -11,6 +11,14 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import time
 import streamlit as st
+import streamlit as st
+import pandas as pd
+
+# Conectando usando a nova biblioteca oficial do Streamlit para Google Sheets
+from streamsync import GSheetsConnection # Se estiver usando a nova conexão st.connection
+
+conn = st.connection("gsheets", type="gsheets")
+# Aqui ele lê automaticamente os segredos que você colou
 
 
 # --- FUNÇÃO AUXILIAR: Cálculo de Idade ---
@@ -368,4 +376,5 @@ elif aba == "🔍 Consulta":
                 
             if c_canc.form_submit_button("❌ Cancelar"):
                 del st.session_state['editando_idx']
+
                 st.rerun()
