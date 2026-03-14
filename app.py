@@ -9,6 +9,11 @@ from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow  # Reativado
 from google.auth.transport.requests import Request  # Reativado
 from streamlit_gsheets import GSheetsConnection
+import streamlit as st
+import os
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2 import service_account # Importação correta para Service Account
 
 # Mantemos a conexão da planilha via Secrets (que já está ótima)
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -36,29 +41,20 @@ def calcular_idade(data_nasc):
 #   client = gspread.authorize(creds)
 #    return client.open_by_key("1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc").sheet1
 
-# 2. Conexão com Google Drive
+# 1. Função de Conexão (Usa APENAS o Secrets do Streamlit)
 def conectar_drive_pessoal():
-    SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive']
-    creds = None
+    # Pega as credenciais que você já colou nos Secrets do Streamlit
+    creds_info = st.secrets["connections"]["gsheets"]
     
-    # Tenta carregar o token de acesso já autorizado
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+    # Define o escopo de acesso ao Drive
+    scopes = ['https://www.googleapis.com/auth/drive']
     
-    # Se não houver token ou se ele expirou
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # Busca o arquivo client_secret.json que deve estar na pasta
-            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        
-        # Salva o token para não precisar logar de novo
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
-            
+    # Cria a credencial sem precisar de arquivo físico
+    creds = service_account.Credentials.from_service_account_info(
+        creds_info, 
+        scopes=scopes
+    )
+    
     return build('drive', 'v3', credentials=creds)
 
 # Funções de Folder e Upload
@@ -75,13 +71,14 @@ def get_or_create_folder(service, name, parent_id=None):
         folder = service.files().create(body=metadata, fields='id', supportsAllDrives=True).execute()
         return folder['id']
 
+# 2. Função de Upload (Com o ajuste de cota)
 def upload_document(service, member_name, file):
-    # ID da sua pasta atual "Cadastro de Membros"
     root_id = "1mtwff3O05vvw1r_QcEovgW8CkhV0d1p7" 
     
-    # O robô cria a pasta do membro dentro da sua
+    # Tenta criar ou recuperar a pasta do membro
     member_id = get_or_create_folder(service, member_name, parent_id=root_id)
     
+    # Salva o arquivo temporariamente para o upload
     os.makedirs("temp", exist_ok=True)
     temp_path = os.path.join("temp", file.name)
     with open(temp_path, "wb") as f:
@@ -91,8 +88,7 @@ def upload_document(service, member_name, file):
         metadata = {'name': file.name, 'parents': [member_id]}
         media = MediaFileUpload(temp_path, resumable=True)
         
-        # O AJUSTE DE OURO:
-        # supportsAllDrives=True diz ao Google para usar a cota do dono da pasta (VOCÊ)
+        # O parâmetro supportsAllDrives=True é o que ajuda na cota
         uploaded = service.files().create(
             body=metadata, 
             media_body=media, 
