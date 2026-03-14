@@ -1,15 +1,29 @@
 import streamlit as st
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
 from datetime import date
 import os
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-from google.oauth2 import service_account
-import pickle
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from streamlit_gsheets import GSheetsConnection
 import time
+import pickle  # Reativado
+from google.auth.transport.requests import Request  # Reativado
+from google_auth_oauthlib.flow import InstalledAppFlow  # Reativado
+
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# Para salvar os novos dados na sua planilha "Cadastro Igreja"
+def salvar_na_planilha(dados_nova_linha):
+    url = "https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0"
+    # Lemos o que já existe
+    df_atual = conn.read(spreadsheet=url)
+    # Criamos um DataFrame com a nova linha (garantindo que as colunas batam)
+    df_novo_registro = pd.DataFrame([dados_nova_linha], columns=df_atual.columns)
+    # Juntamos tudo
+    df_final = pd.concat([df_atual, df_novo_registro], ignore_index=True)
+    # Enviamos de volta para o Google
+    conn.update(spreadsheet=url, data=df_final)
+
 
 # --- FUNÇÃO AUXILIAR: Cálculo de Idade ---
 def calcular_idade(data_nasc):
@@ -19,11 +33,11 @@ def calcular_idade(data_nasc):
     return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
 
 # 1. Conexão com Google Sheets
-def conectar_planilha():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("app-igreja-489815-20b366a946b6.json", scope)
-    client = gspread.authorize(creds)
-    return client.open_by_key("1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc").sheet1
+#def conectar_planilha():
+#    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+#    creds = ServiceAccountCredentials.from_json_keyfile_name("app-igreja-489815-20b366a946b6.json", scope)
+#   client = gspread.authorize(creds)
+#    return client.open_by_key("1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc").sheet1
 
 # 2. Conexão com Google Drive
 def conectar_drive_pessoal():
@@ -163,15 +177,12 @@ if aba == "Novo Cadastro":
     observacoes = st.text_area("Observações", key=f"obs_{fid}")
     documento_file = st.file_uploader("Documentos (PDF, JPG, PNG)", type=["pdf", "jpg", "png", "jpeg"], key=f"file_{fid}")
     
-    if st.button("Salvar Cadastro"):
+if st.button("Salvar Cadastro"):
         if not nome or not nascimento or not nome_mae or not estado_civil:
-            st.error("⚠️ Preencha os campos obrigatórios (Nome, Nascimento, Mãe, Estado Civil).")
+            st.error("⚠️ Preencha os campos obrigatórios.")
         else:
             try:
-                sheet = conectar_planilha()
-                drive_service = conectar_drive_pessoal()
-                doc_link = upload_document(drive_service, nome, documento_file) if documento_file else "Não Aplicável"
-                
+                # 1. Preparar os dados para a planilha
                 nova_linha = [
                     nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
                     rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
@@ -179,14 +190,22 @@ if aba == "Novo Cadastro":
                     filhos_dados[0][0], filhos_dados[0][1], filhos_dados[0][2],
                     filhos_dados[1][0], filhos_dados[1][1], filhos_dados[1][2],
                     filhos_dados[2][0], filhos_dados[2][1], filhos_dados[2][2],
-                    pastor, observacoes or "Não Aplicável", doc_link
+                    pastor, observacoes or "Não Aplicável", "Link do Drive aqui"
                 ]
-                sheet.append_row(nova_linha)
+
+                # 2. Salvar usando a nova conexão (sem precisar do arquivo .json)
+                # O comando 'append_row' do gspread vira 'update' com pandas no st.connection
+                df_atual = conn.read(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0")
+                df_novo = pd.DataFrame([nova_linha], columns=df_atual.columns)
+                df_final = pd.concat([df_atual, df_novo], ignore_index=True)
+                
+                conn.update(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0", data=df_final)
+
                 st.session_state['sucesso'] = True
-                st.session_state['form_id'] += 1
                 st.rerun()
             except Exception as e:
                 st.error(f"Erro ao salvar: {e}")
+
 
 # --- ABA: CONSULTA ---
 elif aba == "🔍 Consulta":
@@ -195,10 +214,12 @@ elif aba == "🔍 Consulta":
     
     if nome_busca:
         try:
-            sheet = conectar_planilha()
-            dados = sheet.get_all_values()
+            # ESTA É A PARTE NOVA:
+            df = conn.read(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0")
+            dados = [df.columns.tolist()] + df.values.tolist() 
+            
             if len(dados) > 1:
-                registros = [[i + 2] + r for i, r in enumerate(dados[1:]) if nome_busca.lower() in r[0].lower()]
+                registros = [[i + 2] + r for i, r in enumerate(dados[1:]) if nome_busca.lower() in str(r[0]).lower()]
                 
                 if registros:
                     for reg in registros:
@@ -249,7 +270,8 @@ elif aba == "🔍 Consulta":
                                 st.session_state['editando_idx'] = idx_linha
                                 st.session_state['dados_edit'] = linha
                             if col_ex.button("🗑️ Excluir", key=f"del_{idx_linha}"):
-                                sheet.delete_rows(idx_linha)
+                                #sheet.delete_rows(idx_linha)
+                                st.warning("A função de excluir será atualizada em breve.")
                                 st.success("Excluído!")
                                 st.rerun()
                 else:
