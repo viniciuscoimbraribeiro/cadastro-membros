@@ -190,10 +190,13 @@ if st.button("Salvar Cadastro"):
             ]
 
             # 2. Chama a função de salvamento
-            salvar_na_planilha(nova_linha)
-
-            st.session_state['sucesso'] = True
-            st.rerun()
+            if salvar_na_planilha(nova_linha):
+                # --- LÓGICA DE LIMPEZA ---
+                st.session_state['sucesso'] = True
+                # Incrementa o ID do formulário para resetar todos os campos (keys)
+                st.session_state['form_id'] += 1 
+                st.rerun()
+            
         except Exception as e:
             st.error(f"Erro ao salvar: {e}")
 
