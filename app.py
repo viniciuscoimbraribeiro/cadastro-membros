@@ -14,15 +14,11 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 # Para salvar os novos dados na sua planilha "Cadastro Igreja"
 def salvar_na_planilha(dados_nova_linha):
-    url = "hhttps://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc/edit?gid=0#gid=0"
-    # Lemos o que já existe
-    df_atual = conn.read(spreadsheet=url)
-    # Criamos um DataFrame com a nova linha (garantindo que as colunas batam)
+    # O conn já sabe a URL porque definimos no Secrets [connections.gsheets]
+    df_atual = conn.read() 
     df_novo_registro = pd.DataFrame([dados_nova_linha], columns=df_atual.columns)
-    # Juntamos tudo
     df_final = pd.concat([df_atual, df_novo_registro], ignore_index=True)
-    # Enviamos de volta para o Google
-    conn.update(spreadsheet=url, data=df_final)
+    conn.update(data=df_final)
 
 
 # --- FUNÇÃO AUXILIAR: Cálculo de Idade ---
@@ -210,7 +206,7 @@ elif aba == "🔍 Consulta":
     if nome_busca:
         try:
             # ESTA É A PARTE NOVA:
-            df = conn.read(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc/edit?gid=0#gid=0")
+            df = conn.read()
             dados = [df.columns.tolist()] + df.values.tolist() 
             
             if len(dados) > 1:
