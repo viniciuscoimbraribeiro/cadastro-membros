@@ -9,6 +9,7 @@ import time
 import pickle  # Reativado
 from google.auth.transport.requests import Request  # Reativado
 from google_auth_oauthlib.flow import InstalledAppFlow  # Reativado
+from google.oauth2 import service_account
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -37,19 +38,14 @@ def calcular_idade(data_nasc):
 
 # 2. Conexão com Google Drive
 def conectar_drive_pessoal():
-    SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive']
-    creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+    # Buscamos as credenciais que já estão no st.secrets
+    creds_info = st.secrets["connections"]["gsheets"]
+    
+    # Criamos o objeto de credenciais
+    creds = service_account.Credentials.from_service_account_info(
+        creds_info,
+        scopes=['https://www.googleapis.com/auth/drive']
+    )
     return build('drive', 'v3', credentials=creds)
 
 # Funções de Folder e Upload
@@ -67,18 +63,23 @@ def get_or_create_folder(service, name, parent_id=None):
         return folder['id']
 
 def upload_document(service, member_name, file):
+    # O ID da sua pasta raiz no Drive (mantenha o que já estava)
     root_id = "1mtwff3O05vvw1r_QcEovgW8CkhV0d1p7"
+    
     member_id = get_or_create_folder(service, member_name, parent_id=root_id)
+    
     os.makedirs("temp", exist_ok=True)
     temp_path = os.path.join("temp", file.name)
     with open(temp_path, "wb") as f:
         f.write(file.getbuffer())
+    
     try:
         metadata = {'name': file.name, 'parents': [member_id]}
         media = MediaFileUpload(temp_path, resumable=True)
         uploaded = service.files().create(body=metadata, media_body=media, fields='id, webViewLink').execute()
-        del media 
-        if os.path.exists(temp_path): os.remove(temp_path)
+        
+        if os.path.exists(temp_path): 
+            os.remove(temp_path)
         return uploaded.get('webViewLink')
     except Exception as e:
         if os.path.exists(temp_path):
