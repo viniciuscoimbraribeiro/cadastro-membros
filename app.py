@@ -2,15 +2,15 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 import os
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-from streamlit_gsheets import GSheetsConnection
 import time
 import pickle  # Reativado
-from google.auth.transport.requests import Request  # Reativado
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow  # Reativado
-from google.oauth2 import service_account
+from google.auth.transport.requests import Request  # Reativado
+from streamlit_gsheets import GSheetsConnection
 
+# Mantemos a conexão da planilha via Secrets (que já está ótima)
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 # Para salvar os novos dados na sua planilha "Cadastro Igreja"
@@ -38,14 +38,27 @@ def calcular_idade(data_nasc):
 
 # 2. Conexão com Google Drive
 def conectar_drive_pessoal():
-    # Buscamos as credenciais que já estão no st.secrets
-    creds_info = st.secrets["connections"]["gsheets"]
+    SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive']
+    creds = None
     
-    # Criamos o objeto de credenciais
-    creds = service_account.Credentials.from_service_account_info(
-        creds_info,
-        scopes=['https://www.googleapis.com/auth/drive']
-    )
+    # Tenta carregar o token de acesso já autorizado
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    
+    # Se não houver token ou se ele expirou
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            # Busca o arquivo client_secret.json que deve estar na pasta
+            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        
+        # Salva o token para não precisar logar de novo
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
+            
     return build('drive', 'v3', credentials=creds)
 
 # Funções de Folder e Upload
@@ -63,9 +76,10 @@ def get_or_create_folder(service, name, parent_id=None):
         return folder['id']
 
 def upload_document(service, member_name, file):
-    # O ID da sua pasta raiz no Drive (mantenha o que já estava)
-    root_id = "1mtwff3O05vvw1r_QcEovgW8CkhV0d1p7"
+    # ID da sua pasta atual "Cadastro de Membros"
+    root_id = "1mtwff3O05vvw1r_QcEovgW8CkhV0d1p7" 
     
+    # O robô cria a pasta do membro dentro da sua
     member_id = get_or_create_folder(service, member_name, parent_id=root_id)
     
     os.makedirs("temp", exist_ok=True)
@@ -76,15 +90,22 @@ def upload_document(service, member_name, file):
     try:
         metadata = {'name': file.name, 'parents': [member_id]}
         media = MediaFileUpload(temp_path, resumable=True)
-        uploaded = service.files().create(body=metadata, media_body=media, fields='id, webViewLink').execute()
+        
+        # O AJUSTE DE OURO:
+        # supportsAllDrives=True diz ao Google para usar a cota do dono da pasta (VOCÊ)
+        uploaded = service.files().create(
+            body=metadata, 
+            media_body=media, 
+            fields='id, webViewLink',
+            supportsAllDrives=True 
+        ).execute()
         
         if os.path.exists(temp_path): 
             os.remove(temp_path)
         return uploaded.get('webViewLink')
     except Exception as e:
         if os.path.exists(temp_path):
-            try: os.remove(temp_path)
-            except: pass 
+            os.remove(temp_path)
         raise e
 
 # Configuração da página
