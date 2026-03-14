@@ -14,7 +14,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 # Para salvar os novos dados na sua planilha "Cadastro Igreja"
 def salvar_na_planilha(dados_nova_linha):
-    url = "https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0"
+    url = "hhttps://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc/edit?gid=0#gid=0"
     # Lemos o que já existe
     df_atual = conn.read(spreadsheet=url)
     # Criamos um DataFrame com a nova linha (garantindo que as colunas batam)
@@ -210,7 +210,7 @@ elif aba == "🔍 Consulta":
     if nome_busca:
         try:
             # ESTA É A PARTE NOVA:
-            df = conn.read(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0")
+            df = conn.read(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTcWlR7fjIwLgveDvnBh6wGdvc/edit?gid=0#gid=0")
             dados = [df.columns.tolist()] + df.values.tolist() 
             
             if len(dados) > 1:
