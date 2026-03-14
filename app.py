@@ -59,6 +59,8 @@ def upload_document(service, member_name, file):
     try:
         metadata = {'name': file.name, 'parents': [member_id]}
         media = MediaFileUpload(temp_path, resumable=True)
+        
+        # O robô faz o upload
         uploaded = service.files().create(
             body=metadata, 
             media_body=media, 
@@ -66,8 +68,26 @@ def upload_document(service, member_name, file):
             supportsAllDrives=True 
         ).execute()
         
+        file_id = uploaded.get('id')
+
+        # --- AÇÃO PARA EVITAR O ERRO 403 ---
+        # O robô dá permissão de escrita para o seu e-mail pessoal. 
+        # Isso vincula o arquivo à sua cota de 200GB.
+        # Substitua o e-mail abaixo pelo seu e-mail principal (o da foto do Drive)
+        email_dono = "seu_email_aqui@gmail.com" 
+        
+        try:
+            service.permissions().create(
+                fileId=file_id,
+                body={'type': 'user', 'role': 'writer', 'emailAddress': email_dono},
+                supportsAllDrives=True
+            ).execute()
+        except:
+            pass # Se não conseguir dar permissão, ele segue assim mesmo
+
         if os.path.exists(temp_path): 
             os.remove(temp_path)
+            
         return uploaded.get('webViewLink')
     except Exception as e:
         if os.path.exists(temp_path):
