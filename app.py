@@ -74,7 +74,7 @@ def upload_document(service, member_name, file):
         # O robô dá permissão de escrita para o seu e-mail pessoal. 
         # Isso vincula o arquivo à sua cota de 200GB.
         # Substitua o e-mail abaixo pelo seu e-mail principal (o da foto do Drive)
-        email_dono = "seu_email_aqui@gmail.com" 
+        email_dono = "viniciuscoimbraribeiro@gmail.com" 
         
         try:
             service.permissions().create(
