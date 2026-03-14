@@ -189,13 +189,13 @@ if st.button("Salvar Cadastro"):
                 pastor, observacoes or "Não Aplicável", "Link do Drive aqui"
             ]
 
-            # 2. Chama a função de salvamento
-            if salvar_na_planilha(nova_linha):
-                # --- LÓGICA DE LIMPEZA ---
-                st.session_state['sucesso'] = True
-                # Incrementa o ID do formulário para resetar todos os campos (keys)
-                st.session_state['form_id'] += 1 
-                st.rerun()
+            # 2. Executa o salvamento
+            salvar_na_planilha(nova_linha)
+
+            # 3. Sincroniza: Limpa campos E prepara o aviso de sucesso
+            st.session_state['sucesso'] = True
+            st.session_state['form_id'] += 1  # Limpa os campos
+            st.rerun()  # Recarrega a página para aplicar a limpeza e mostrar o topo
             
         except Exception as e:
             st.error(f"Erro ao salvar: {e}")
