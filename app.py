@@ -181,8 +181,8 @@ if st.button("Salvar Cadastro"):
         if not nome or not nascimento or not nome_mae or not estado_civil:
             st.error("⚠️ Preencha os campos obrigatórios.")
         else:
-            try:
-                # 1. Preparar os dados para a planilha
+try:
+                # 1. Preparar os dados
                 nova_linha = [
                     nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
                     rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
@@ -193,13 +193,8 @@ if st.button("Salvar Cadastro"):
                     pastor, observacoes or "Não Aplicável", "Link do Drive aqui"
                 ]
 
-                # 2. Salvar usando a nova conexão (sem precisar do arquivo .json)
-                # O comando 'append_row' do gspread vira 'update' com pandas no st.connection
-                df_atual = conn.read(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0")
-                df_novo = pd.DataFrame([nova_linha], columns=df_atual.columns)
-                df_final = pd.concat([df_atual, df_novo], ignore_index=True)
-                
-                conn.update(spreadsheet="https://docs.google.com/spreadsheets/d/1obsFkjwgyBgTEi2YzGTCWlR7fjlwLgveDvnBh6wGdvc/edit#gid=0", data=df_final)
+                # 2. Chama a função de salvamento
+                salvar_na_planilha(nova_linha)
 
                 st.session_state['sucesso'] = True
                 st.rerun()
