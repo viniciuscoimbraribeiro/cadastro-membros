@@ -179,7 +179,15 @@ if st.button("Salvar Cadastro"):
         st.error("⚠️ Preencha os campos obrigatórios.")
     else:
         try:
-            # 1. Preparar os dados
+            link_drive = "Não Anexado"
+            
+            # Realiza o upload se houver arquivo selecionado
+            if documento_file:
+                with st.spinner("Enviando documento para o Drive..."):
+                    drive_service = conectar_drive_pessoal()
+                    link_drive = upload_document(drive_service, nome, documento_file)
+
+            # 1. Preparar os dados (agora com o link real do Drive)
             nova_linha = [
                 nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
                 rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
@@ -187,19 +195,18 @@ if st.button("Salvar Cadastro"):
                 filhos_dados[0][0], filhos_dados[0][1], filhos_dados[0][2],
                 filhos_dados[1][0], filhos_dados[1][1], filhos_dados[1][2],
                 filhos_dados[2][0], filhos_dados[2][1], filhos_dados[2][2],
-                pastor, observacoes or "Não Aplicável", "Link do Drive aqui"
+                pastor, observacoes or "Não Aplicável", link_drive
             ]
 
-            # 2. Executa o salvamento
+            # 2. Executa o salvamento na planilha
             salvar_na_planilha(nova_linha)
 
-            # 3. Sincroniza: Limpa campos E prepara o aviso de sucesso
             st.session_state['sucesso'] = True
-            st.session_state['form_id'] += 1  # Limpa os campos
-            st.rerun()  # Recarrega a página para aplicar a limpeza e mostrar o topo
+            st.session_state['form_id'] += 1
+            st.rerun()
             
         except Exception as e:
-            st.error(f"Erro ao salvar: {e}")
+            st.error(f"Erro ao processar cadastro: {e}")
 
 
 # --- ABA: CONSULTA ---
