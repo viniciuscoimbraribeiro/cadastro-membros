@@ -5,7 +5,7 @@ import requests
 import base64
 import re
 from streamlit_gsheets import GSheetsConnection
-import locale
+
 
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
@@ -259,7 +259,7 @@ elif aba == "🔍 Consulta":
                                     try:
                                         data_atual_dt = pd.to_datetime(linha[1], dayfirst=True).date()
                                     except:
-                                        data_atual_dt = None
+                                        data_atual_dt = date.today() # Caso a data na planilha esteja inválid
                                     n_nasc = st.date_input("Nascimento", value=data_atual_dt, format="DD/MM/YYYY")
                                     n_end = st.text_input("Endereço", value=linha[2])
                                     n_cpf = st.text_input("CPF", value=linha[5])
