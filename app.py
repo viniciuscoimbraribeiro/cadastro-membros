@@ -39,7 +39,7 @@ def upload_document_github(member_name, file):
     # Criar um caminho de pasta limpo
     member_folder = member_name.replace(' ', '_').upper()
     path = f"cadastros/{member_folder}/{file_name}"
-    url = f"https://api.github.com/repos/{repo}/contents/{path}""
+    url = f"https://api.github.com/repos/{repo}/contents/{path}"
     
     content = base64.b64encode(file.getvalue()).decode()
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
