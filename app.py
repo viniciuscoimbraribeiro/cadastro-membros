@@ -171,10 +171,14 @@ if aba == "Novo Cadastro":
 
 elif aba == "🔍 Consulta":
     st.header("🔍 Consultar e Gerenciar Membros")
-    nome_busca = st.text_input("Digite o nome para pesquisar")
+    # Campo de texto e botão lado a lado ou um abaixo do outro
+    nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
+    botao_buscar = st.button("🔎 Buscar Membro", use_container_width=True)
     
-    if nome_busca:
+    # A busca acontece se apertar ENTER (nome_busca) OU se clicar no BOTÃO (botao_buscar)
+    if nome_busca or botao_buscar:
         try:
+            # Forçamos a leitura sem cache para garantir dados frescos
             df = conn.read(ttl=0)
             
             def normalizar(texto):
@@ -183,9 +187,11 @@ elif aba == "🔍 Consulta":
                              if unicodedata.category(c) != 'Mn').lower().strip()
 
             busca_limpa = normalizar(nome_busca)
+            # Filtro inteligente
             indices_encontrados = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)].index
 
             if not indices_encontrados.empty:
+                st.success(f"Encontrado(s) {len(indices_encontrados)} registro(s):")
                 for idx in indices_encontrados:
                     linha = df.loc[idx].tolist()
                     
