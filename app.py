@@ -211,24 +211,32 @@ elif aba == "🔍 Consulta":
                                 import re
 
                                 # --- LIMPEZA DO CPF ---
-                                raw_cpf = str(linha[5]).strip()
-                                # Remove .0 do final, espaços e qualquer caractere que não seja número
-                                if raw_cpf.endswith('.0'): raw_cpf = raw_cpf[:-2]
-                                cpf_limpo = re.sub(r'\D', '', raw_cpf)
+                                # Converte para string e remove espaços
+                                val_cpf = str(linha[5]).strip()
+                            
+                                # Se o Pandas trouxe o .0, nós cortamos
+                                if val_cpf.endswith('.0'):
+                                    val_cpf = val_cpf[:-2]
+                            
+                                # Mantém apenas os números
+                                cpf_limpo = re.sub(r'\D', '', val_cpf)
                             
                                 if len(cpf_limpo) >= 1:
-                                    cpf_num = cpf_limpo.zfill(11)
-                                    cpf_f = f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
+                                    # Preenche com zero à esquerda até ter 11 dígitos
+                                    c = cpf_limpo.zfill(11)
+                                    cpf_f = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
                                 else:
                                     cpf_f = "Não Aplicável"
 
                                 # --- LIMPEZA DO RG ---
-                                raw_rg = str(linha[4]).strip()
-                                if raw_rg.endswith('.0'): raw_rg = raw_rg[:-2]
-                                rg_f = re.sub(r'\D', '', raw_rg)
-                                if not rg_f: rg_f = "Não Aplicável"
+                                val_rg = str(linha[4]).strip()
+                                if val_rg.endswith('.0'):
+                                    val_rg = val_rg[:-2]
+                                rg_f = re.sub(r'\D', '', val_rg)
+                                if not rg_f:
+                                    rg_f = "Não Aplicável"
 
-                                # --- EXIBIÇÃO DIRETA ---
+                                # --- EXIBIÇÃO ---
                                 st.write(f"**Nasc:** {linha[1]}")
                                 st.write(f"**CPF:** {cpf_f}")
                                 st.write(f"**RG:** {rg_f}")
