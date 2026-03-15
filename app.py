@@ -55,18 +55,22 @@ if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta", "📊 Estatísticas"])
 
 if aba == "Novo Cadastro":
+    # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
+    col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
+    with col_l2:
+        try:
+            st.image("logo_igreja.jpeg", use_container_width=True)
+        except:
+            st.warning("Logo não encontrado.")
 
+    st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
+    
+    if 'sucesso' in st.session_state:
+        st.success("✅ Cadastro realizado com sucesso!")
+        del st.session_state['sucesso']
 
-# --- INTERFACE TOPO CENTRALIZADA ---
-col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) # Cria 3 colunas para centralizar a do meio
-with col_l2:
-    try:
-        # 'use_container_width' faz a imagem se ajustar ao tamanho da coluna no celular
-        st.image("logo_igreja.jpeg", use_container_width=True)
-    except:
-        st.warning("Logo não encontrado.")
-
-st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
+    fid = st.session_state['form_id']
+    # ... segue o restante do formulário
 
     
     if 'sucesso' in st.session_state:
