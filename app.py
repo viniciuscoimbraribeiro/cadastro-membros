@@ -309,35 +309,66 @@ elif aba == "🔍 Consulta":
 
                         else:
                             # --- MODO EDIÇÃO ---
+   # --- MODO EDIÇÃO ---
                             st.markdown(f"### 📝 Editando: {linha[0]}")
+                            
                             with st.form(key=f"form_edit_{idx}"):
                                 col_e1, col_e2 = st.columns(2)
+                                
+                                # Lista de opções para o Estado Civil
+                                opcoes_civil = ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"]
+                                
+                                # Descobrir qual o índice atual do estado civil na lista (evita o erro do Selectbox)
+                                try:
+                                    valor_atual = str(linha[9]).strip()
+                                    idx_civil = opcoes_civil.index(valor_atual)
+                                except:
+                                    idx_civil = 0 # Caso não encontre, volta para o primeiro da lista
+
                                 with col_e1:
                                     n_nome = st.text_input("Nome", value=linha[0])
+                                    
+                                    # Tratamento da data para o calendário
                                     try:
                                         data_atual_dt = pd.to_datetime(linha[1], dayfirst=True).date()
                                     except:
-                                        data_atual_dt = date.today() # Caso a data na planilha esteja inválid
-                                    #n_nasc = st.date_input("Nascimento", value=data_atual_dt, format="DD/MM/YYYY")
+                                        from datetime import date
+                                        data_atual_dt = date.today()
+                                    
+                                    n_nasc = st.date_input("Nascimento", value=data_atual_dt, format="DD/MM/YYYY")
                                     n_end = st.text_input("Endereço", value=linha[2])
-                                    #n_cpf = st.text_input("CPF", value=linha[5])
+                                    n_cpf = st.text_input("CPF", value=linha[5])
+
                                 with col_e2:
-                                    n_estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], value=linha[9])
+                                    # Corrigido: usamos 'index' em vez de 'value'
+                                    n_estado_civil = st.selectbox("Estado Civil", opcoes_civil, index=idx_civil)
                                     n_conj = st.text_input("Cônjuge", value=linha[6])
                                     n_pastor = st.text_input("Pastor", value=linha[19])
                                     n_obs = st.text_area("Observações", value=linha[20])
                                 
+                                # IMPORTANTE: Os botões DEVEM estar dentro do 'with st.form'
                                 c_save, c_cancel = st.columns(2)
-                                if c_save.form_submit_button("💾 Salvar"):
+                                
+                                btn_salvar = c_save.form_submit_button("💾 Salvar Alterações")
+                                btn_cancelar = c_cancel.form_submit_button("❌ Cancelar")
+
+                                if btn_salvar:
+                                    # Atualiza os dados no DataFrame
                                     df.at[idx, df.columns[0]] = n_nome
-                                    df.at[idx, df.columns[1]] = n_nasc
+                                    df.at[idx, df.columns[1]] = n_nasc.strftime('%d/%m/%Y') # Salva como texto formatado
                                     df.at[idx, df.columns[2]] = n_end
                                     df.at[idx, df.columns[5]] = n_cpf
                                     df.at[idx, df.columns[6]] = n_conj
                                     df.at[idx, df.columns[9]] = n_estado_civil
                                     df.at[idx, df.columns[19]] = n_pastor
                                     df.at[idx, df.columns[20]] = n_obs
+                                    
                                     conn.update(data=df)
+                                    st.success("Dados atualizados com sucesso!")
+                                    st.session_state[edit_key] = False
+                                    st.rerun()
+                                
+                                if btn_cancelar:
                                     st.session_state[edit_key] = False
                                     st.rerun()
                                 
