@@ -322,6 +322,7 @@ elif aba == "🔍 Consulta":
                                     n_end = st.text_input("Endereço", value=linha[2])
                                     #n_cpf = st.text_input("CPF", value=linha[5])
                                 with col_e2:
+                                    n_estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], value=linha[9])
                                     n_conj = st.text_input("Cônjuge", value=linha[6])
                                     n_pastor = st.text_input("Pastor", value=linha[19])
                                     n_obs = st.text_area("Observações", value=linha[20])
@@ -333,6 +334,7 @@ elif aba == "🔍 Consulta":
                                     df.at[idx, df.columns[2]] = n_end
                                     df.at[idx, df.columns[5]] = n_cpf
                                     df.at[idx, df.columns[6]] = n_conj
+                                    df.at[idx, df.columns[9]] = n_estado_civil
                                     df.at[idx, df.columns[19]] = n_pastor
                                     df.at[idx, df.columns[20]] = n_obs
                                     conn.update(data=df)
