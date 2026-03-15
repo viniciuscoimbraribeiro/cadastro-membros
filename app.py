@@ -242,35 +242,6 @@ elif aba == "🔍 Consulta":
         except Exception as e:
             st.error(f"Erro ao carregar dados: {e}")
                         
-                        st.divider()
-                        col_pri, col_ed, col_ex = st.columns(3)
-                        
-                        if col_pri.button("🖨️ Imprimir", key=f"print_{idx}"):
-                            # Script para abrir janela de impressão
-                            html_print = f"""
-                            <script>
-                                var win = window.open('', '_blank');
-                                win.document.write('<html><body><h2>Ficha de Membro</h2><hr>');
-                                win.document.write('<p><b>Nome:</b> {linha[0]}</p>');
-                                win.document.write('<p><b>CPF:</b> {linha[5]}</p>');
-                                win.document.write('<p><b>Endereço:</b> {linha[2]}</p>');
-                                win.document.write('</body></html>');
-                                win.document.close();
-                                win.print();
-                            </script>
-                            """
-                            st.components.v1.html(html_print, height=0)
-
-                        if col_ed.button("📝 Editar", key=f"ed_{idx}"):
-                            st.info("Para editar, acesse a planilha do Google diretamente.")
-
-                        if col_ex.button("🗑️ Excluir", key=f"del_{idx}"):
-                            st.warning("A remoção deve ser feita na planilha principal.")
-
-            else:
-                st.warning("Nenhum membro encontrado.")
-        except Exception as e:
-            st.error(f"Erro ao carregar dados: {e}")
 
 elif aba == "📊 Estatísticas":
     st.info("Funcionalidade em desenvolvimento.")
