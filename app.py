@@ -70,7 +70,7 @@ if aba == "Novo Cadastro":
         st.success("✅ Cadastro realizado com sucesso!")
         del st.session_state['sucesso']
 
-    st.header("📝 Formulário de Registro")
+    #st.header("📝 Formulário de Registro")
     fid = st.session_state['form_id']
     
     col1, col2 = st.columns(2)
