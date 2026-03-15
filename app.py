@@ -169,15 +169,21 @@ elif aba == "🔍 Consulta":
     if nome_busca:
         try:
             df = conn.read()
-            # Limpa espaços e converte tudo para minúsculo para comparar
-            busca_limpa = nome_busca.strip().lower()
             
-            # Filtro que ignora erros de digitação comuns e espaços extras
-            resultado = df[df.iloc[:, 0].astype(str).str.lower().str.contains(busca_limpa, na=False)]
+            # FILTRO "MÁGICO": Ignora espaços, maiúsculas e acentos
+            def normalizar(texto):
+                import unicodedata
+                return "".join(c for c in unicodedata.normalize('NFD', str(texto))
+                             if unicodedata.category(c) != 'Mn').lower().strip()
+
+            busca_limpa = normalizar(nome_busca)
+            # Aplica o filtro na primeira coluna (Nome)
+            resultado = df[df.iloc[:, 0].apply(normalizar).str.contains(busca_limpa, na=False)]
             
             if not resultado.empty:
                 for idx, row in resultado.iterrows():
                     linha = row.tolist()
+                    
                     with st.expander(f"👤 {linha[0].upper()}"):
                         c1, c2, c3 = st.columns(3)
                         with c1:
@@ -199,14 +205,29 @@ elif aba == "🔍 Consulta":
                             st.write(f"**Pastor:** {linha[19]}") 
                             st.info(f"**Obs:** {linha[20]}")
 
-                        # Botão de Documento atualizado para o GitHub
-                        # O BOTÃO AGORA ABRE UM LINK DIRETO (Sem erro de Request)
+                        # Botão de Documento (Link Direto para evitar Rate Limit)
                         if len(linha) > 21 and "http" in str(linha[21]):
-                            st.link_button("📂 Visualizar Documento", linha[21])
+                            st.link_button("📂 Visualizar Documento", linha[21], use_container_width=True)
+                        
+                        # --- BOTÕES DE AÇÃO (Agora no lugar certo) ---
+                        st.divider()
+                        col_pri, col_ed, col_ex = st.columns(3)
+                        
+                        if col_pri.button("🖨️ Imprimir", key=f"print_{idx}"):
+                            st.write("Abrindo janela de impressão...")
+                            # (Código de impressão aqui...)
+
+                        if col_ed.button("📝 Editar", key=f"ed_{idx}"):
+                            st.info("Edite diretamente na Planilha Google.")
+
+                        if col_ex.button("🗑️ Excluir", key=f"del_{idx}"):
+                            st.warning("A exclusão deve ser feita na planilha.")
+
             else:
-                st.warning(f"Nenhum registro encontrado para '{nome_busca}'. Verifique a planilha.")
+                st.warning(f"Nenhum registro encontrado para '{nome_busca}'.")
+                
         except Exception as e:
-            st.error(f"Erro na consulta: {e}")
+            st.error(f"Erro ao carregar dados: {e}")
                         
                         st.divider()
                         col_pri, col_ed, col_ex = st.columns(3)
