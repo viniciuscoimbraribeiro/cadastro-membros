@@ -28,7 +28,7 @@ def calcular_idade(data_nasc):
 def upload_document_github(member_name, file):
     token = st.secrets["GITHUB_TOKEN"]
     # AJUSTE O NOME DO REPOSITÓRIO ABAIXO SE FOR DIFERENTE
-    repo = "viniciuscoimbraribeiro/app-igreja-489815" 
+    repo = "viniciuscoimbraribeiro/cadastro-membros"
     branch = "main"
     
     file_name = file.name.replace(" ", "_")
