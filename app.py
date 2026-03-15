@@ -7,7 +7,7 @@ import re
 from streamlit_gsheets import GSheetsConnection
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-
+st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
 
 # Conexão da planilha via Secrets (Mantida para os dados)
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -56,7 +56,7 @@ aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta", "📊 E
 
 if aba == "Novo Cadastro":
 
-st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
+
 # --- INTERFACE TOPO CENTRALIZADA ---
 col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) # Cria 3 colunas para centralizar a do meio
 with col_l2:
