@@ -207,28 +207,32 @@ elif aba == "🔍 Consulta":
                             # --- MODO VISUALIZAÇÃO ---
                             c1, c2, c3 = st.columns(3)
                             with c1:
-                                st.markdown("### 📋 Dados")
-                                st.write(f"**Nasc:** {linha[1]}")
-                                st.write(f"**CPF:** {linha[5]}")
-                                # Função interna para formatar CPF
-                                def formatar_cpf(valor):
-                                    # Remove o .0 se existir e transforma em string de números apenas
-                                    cpf_limpo = re.sub(r'\D', '', str(valor).split('.')[0])
-    
-                                    # Se estiver vazio ou for "nan", retorna Não Aplicável
-                                    if not cpf_limpo or cpf_limpo.lower() == "nan":
-                                        return "Não Aplicável"
-    
-                                    # Garante que tenha 11 dígitos (preenche com 0 à esquerda)
-                                    cpf_padrao = cpf_limpo.zfill(11)
-    
-                                    # Aplica a máscara: 000.000.000-00
-                                    return f"{cpf_padrao[:3]}.{cpf_padrao[3:6]}.{cpf_padrao[6:9]}-{cpf_padrao[9:]}"
-
-                                    # Exibição formatada
-                                    st.write(f"**CPF:** {formatar_cpf(linha[5])}")
+                            st.markdown("### 📋 Dados")
                             
-                                
+                            # 1. Definimos a função de limpeza (mata o .0 e garante zeros à esquerda)
+                            def formatar_documento(valor, tamanho):
+                                if not valor or str(valor).lower() in ["nan", "none", ""]:
+                                    return "Não Aplicável"
+                                # Remove o .0 e pega apenas os números
+                                limpo = re.sub(r'\D', '', str(valor).split('.')[0])
+                                return limpo.zfill(tamanho)
+
+                            # 2. Formatamos o CPF com a máscara
+                            cpf_num = formatar_documento(linha[5], 11)
+                            if cpf_num != "Não Aplicável":
+                                cpf_formatado = f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
+                            else:
+                                cpf_formatado = cpf_num
+
+                            # 3. Formatamos o RG (geralmente 9 dígitos, mas varia, então apenas limpamos o .0)
+                            rg_formatado = formatar_documento(linha[4], 1) # 1 aqui apenas para não sumir com RGs curtos
+
+                            # 4. Exibição na tela
+                            st.write(f"**Nasc:** {linha[1]}")
+                            st.write(f"**CPF:** {cpf_formatado}")
+                            st.write(f"**RG:** {rg_formatado}")
+                            st.write(f"**Profissão:** {linha[3]}")
+                            
                             with c2:
                                 st.markdown("### 👨‍👩‍👧 Família")
                                 # Cônjuge com tratamento para vazio
