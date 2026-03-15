@@ -73,8 +73,16 @@ if aba == "Novo Cadastro":
         nascimento = st.date_input("Data de Nascimento", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
         endereco = st.text_input("Endereço", key=f"end_{fid}")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
-        rg_txt = st.text_input("RG", key=f"rg_{fid}")
-        cpf_txt = st.text_input("CPF", key=f"cpf_{fid}")
+        # --- AJUSTE AQUI: Campos com trava de números ---
+        rg_input = st.text_input("RG (Apenas números)", key=f"rg_raw_{fid}")
+        rg_txt = re.sub(r'\D', '', rg_input) # Remove tudo que não for número
+        
+        cpf_input = st.text_input("CPF (Apenas números)", key=f"cpf_raw_{fid}", max_chars=11)
+        cpf_txt = re.sub(r'\D', '', cpf_input) # Remove tudo que não for número
+        
+        # Feedback visual para o usuário
+        if rg_input != rg_txt or cpf_input != cpf_txt:
+            st.warning("⚠️ Letras ou símbolos foram removidos. Use apenas números.")
 
     with col2:
         nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
