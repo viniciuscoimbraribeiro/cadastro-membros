@@ -94,8 +94,7 @@ if aba == "Novo Cadastro":
         nascimento = st.date_input("Data de Nascimento", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
         endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
-        # --- AJUSTE AQUI: Campos com trava de números ---
-# --- RG com trava de letras e bloqueio de preenchimento automático ---
+
 # --- RG com trava e bloqueio reforçado de Autofill ---
         rg_input = st.text_input(
             "Nº do Registro Geral", # Mudamos o nome para 'despistar' o navegador
@@ -171,84 +170,95 @@ if aba == "Novo Cadastro":
                 st.error(f"Erro: {e}")
 
 elif aba == "🔍 Consulta":
-    st.header("🔍 Consultar Membros")
+    st.header("🔍 Consultar e Editar Membros")
     nome_busca = st.text_input("Digite o nome para pesquisar")
     
     if nome_busca:
         try:
-            # Lendo a planilha
+            # ttl=0 garante que os dados estejam sempre atualizados com a planilha
             df = conn.read(ttl=0)
             
-            # FILTRO "MÁGICO": Ignora espaços, maiúsculas e acentos
             def normalizar(texto):
                 import unicodedata
                 return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                              if unicodedata.category(c) != 'Mn').lower().strip()
 
             busca_limpa = normalizar(nome_busca)
-            
-            # Aplica o filtro na primeira coluna (Nome)
-            # O .astype(str) garante que não dê erro se houver número na coluna de nome
-            resultado = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)]
-            
-            if not resultado.empty:
-                for idx, row in resultado.iterrows():
-                    linha = row.tolist()
+            # Pesquisa na primeira coluna (Nome)
+            indices_encontrados = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)].index
+
+            if not indices_encontrados.empty:
+                for idx in indices_encontrados:
+                    linha = df.loc[idx].tolist()
                     
                     with st.expander(f"👤 {linha[0].upper()}"):
-                        c1, c2, c3 = st.columns(3)
-                        with c1:
-                            st.markdown("### 📋 Dados Pessoais")
-                            st.write(f"**Nascimento:** {linha[1]}")
-                            st.write(f"**RG:** {linha[4]}")
-                            st.write(f"**CPF:** {linha[5]}")
-                            st.write(f"**Endereço:** {linha[2]}")
-                            st.write(f"**Profissão:** {linha[3]}")
-                        with c2:
-                            st.markdown("### 👨‍👩‍👧 Família")
-                            st.write(f"**Estado Civil:** {linha[9]}")
-                            st.write(f"**Cônjuge:** {linha[6]}")
-                            st.write(f"**Pai:** {linha[7]}")
-                            st.write(f"**Mãe:** {linha[8]}")
-                            st.write(f"**Filho 1:** {linha[10]} ({linha[12]} anos)")
-                        with c3:
-                            st.markdown("### ⛪ Igreja")
-                            st.write(f"**Pastor:** {linha[19]}") 
-                            st.info(f"**Obs:** {linha[20]}")
+                        # Criamos uma chave única para controlar se este membro está sendo editado
+                        edit_key = f"edit_mode_{idx}"
+                        if edit_key not in st.session_state:
+                            st.session_state[edit_key] = False
 
-                        # Botão de Documento (Link Direto/Raw para evitar erro de Too Many Requests)
-                        if len(linha) > 21 and "http" in str(linha[21]):
-                            st.link_button("📂 Visualizar Documento", linha[21], use_container_width=True)
-                        
-                        st.divider()
-                        col_pri, col_ed, col_ex = st.columns(3)
-                        
-                        if col_pri.button("🖨️ Imprimir", key=f"print_{idx}"):
-                            # Script para abrir janela de impressão
-                            html_print = f"""
-                            <script>
-                                var win = window.open('', '_blank');
-                                win.document.write('<html><body style="font-family:sans-serif;"><h2>Ficha de Membro</h2><hr>');
-                                win.document.write('<p><b>Nome:</b> {linha[0]}</p>');
-                                win.document.write('<p><b>CPF:</b> {linha[5]}</p>');
-                                win.document.write('<p><b>Endereço:</b> {linha[2]}</p>');
-                                win.document.write('</body></html>');
-                                win.document.close();
-                                win.print();
-                            </script>
-                            """
-                            st.components.v1.html(html_print, height=0)
+                        if not st.session_state[edit_key]:
+                            # --- MODO VISUALIZAÇÃO ---
+                            c1, c2, c3 = st.columns(3)
+                            with c1:
+                                st.markdown("### 📋 Dados")
+                                st.write(f"**Nasc:** {linha[1]}")
+                                st.write(f"**CPF:** {linha[5]}")
+                            with c2:
+                                st.markdown("### 👨‍👩‍👧 Família")
+                                st.write(f"**Cônjuge:** {linha[6]}")
+                            with c3:
+                                st.markdown("### ⛪ Igreja")
+                                st.write(f"**Pastor:** {linha[19]}")
 
-                        if col_ed.button("📝 Editar", key=f"ed_{idx}"):
-                            st.info("Para editar, acesse a planilha do Google diretamente.")
+                            st.divider()
+                            col_pri, col_ed, col_ex = st.columns(3)
+                            
+                            if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}"):
+                                st.session_state[edit_key] = True
+                                st.rerun()
+                                
+                            # (Mantenha aqui seus botões de Imprimir e Excluir se desejar)
 
-                        if col_ex.button("🗑️ Excluir", key=f"del_{idx}"):
-                            st.warning("A remoção deve ser feita na planilha principal.")
+                        else:
+                            # --- MODO EDIÇÃO (O formulário aparece aqui) ---
+                            st.markdown(f"### 📝 Editando: {linha[0]}")
+                            with st.form(key=f"form_edit_{idx}"):
+                                new_nome = st.text_input("Nome", value=linha[0])
+                                new_nasc = st.text_input("Nascimento", value=linha[1])
+                                new_end = st.text_input("Endereço", value=linha[2])
+                                new_prof = st.text_input("Profissão", value=linha[3])
+                                new_rg = st.text_input("RG", value=linha[4])
+                                new_cpf = st.text_input("CPF", value=linha[5])
+                                new_pastor = st.text_input("Pastor", value=linha[19])
+                                new_obs = st.text_area("Observações", value=linha[20])
+                                
+                                col_save, col_cancel = st.columns(2)
+                                if col_save.form_submit_button("💾 Salvar Alterações"):
+                                    # Atualiza o DataFrame na memória
+                                    df.at[idx, df.columns[0]] = new_nome
+                                    df.at[idx, df.columns[1]] = new_nasc
+                                    df.at[idx, df.columns[2]] = new_end
+                                    df.at[idx, df.columns[3]] = new_prof
+                                    df.at[idx, df.columns[4]] = new_rg
+                                    df.at[idx, df.columns[5]] = new_cpf
+                                    df.at[idx, df.columns[19]] = new_pastor
+                                    df.at[idx, df.columns[20]] = new_obs
+                                    
+                                    # Envia de volta para o Google Sheets
+                                    conn.update(data=df)
+                                    st.success("Alterações salvas com sucesso!")
+                                    st.session_state[edit_key] = False
+                                    st.rerun()
+                                
+                                if col_cancel.form_submit_button("❌ Cancelar"):
+                                    st.session_state[edit_key] = False
+                                    st.rerun()
+
             else:
-                st.warning(f"Nenhum membro encontrado para '{nome_busca}'.")
-
+                st.warning("Nenhum membro encontrado.")
         except Exception as e:
-            st.error(f"Erro ao carregar dados: {e}")
+            st.error(f"Erro ao processar edição: {e}")
                         
 
 elif aba == "📊 Estatísticas":
