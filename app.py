@@ -309,7 +309,7 @@ elif aba == "🔍 Consulta":
 
                         else:
                             # --- MODO EDIÇÃO ---
-# --- MODO EDIÇÃO ---
+
                             st.markdown(f"### 📝 Editando: {linha[0]}")
                             
                             with st.form(key=f"form_edit_{idx}"):
@@ -321,12 +321,13 @@ elif aba == "🔍 Consulta":
                                 if raw_cpf_edit.endswith('.0'):
                                     raw_cpf_edit = raw_cpf_edit[:-2]
                                 cpf_limpo_edit = re.sub(r'\D', '', raw_cpf_edit)
-
                                 # 2. LÓGICA DO ESTADO CIVIL
                                 opcoes_civil = ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"]
                                 try:
+                                    # Procura a posição do texto que está na planilha dentro da nossa lista
                                     idx_civil = opcoes_civil.index(str(linha[9]).strip())
-                                if except:
+                                except:
+                                    # Se der erro (ex: campo vazio), assume o primeiro da lista
                                     idx_civil = 0
 
                                 with col_e1:
