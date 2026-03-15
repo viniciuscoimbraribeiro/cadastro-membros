@@ -163,14 +163,15 @@ if aba == "Novo Cadastro":
                 st.error(f"Erro: {e}")
 
 elif aba == "🔍 Consulta":
-    st.header("🔍 Consultar Membros")
+    st.header("🔍 Consultar Membros") # Título específico da consulta
     nome_busca = st.text_input("Digite o nome para pesquisar")
     
     if nome_busca:
         try:
             df = conn.read()
-            # Filtra o nome (ignora maiúsculas/minúsculas)
-            resultado = df[df.iloc[:, 0].str.contains(nome_busca, case=False, na=False)]
+            # Este filtro limpa espaços e ignora se é maiúscula ou minúscula
+            nome_limpo = nome_busca.strip().lower()
+            resultado = df[df.iloc[:, 0].str.lower().str.contains(nome_limpo, na=False)]
             
             if not resultado.empty:
                 for idx, row in resultado.iterrows():
