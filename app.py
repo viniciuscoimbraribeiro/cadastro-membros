@@ -207,9 +207,9 @@ elif aba == "🔍 Consulta":
                             # --- MODO VISUALIZAÇÃO ---
                             c1, c2, c3 = st.columns(3)
                             with c1:
-                            st.markdown("### 📋 Dados")
+                                st.markdown("### 📋 Dados")
                             
-                            # 1. Definimos a função de limpeza (mata o .0 e garante zeros à esquerda)
+                                # 1. Definimos a função de limpeza (mata o .0 e garante zeros à esquerda)
                             def formatar_documento(valor, tamanho):
                                 if not valor or str(valor).lower() in ["nan", "none", ""]:
                                     return "Não Aplicável"
