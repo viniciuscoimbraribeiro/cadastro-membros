@@ -163,21 +163,22 @@ if aba == "Novo Cadastro":
                 st.error(f"Erro: {e}")
 
 elif aba == "🔍 Consulta":
-    st.header("🔍 Consultar Membros") # Título específico da consulta
+    st.header("🔍 Consultar Membros")
     nome_busca = st.text_input("Digite o nome para pesquisar")
     
     if nome_busca:
         try:
             df = conn.read()
-            # Este filtro limpa espaços e ignora se é maiúscula ou minúscula
-            nome_limpo = nome_busca.strip().lower()
-            resultado = df[df.iloc[:, 0].str.lower().str.contains(nome_limpo, na=False)]
+            # Limpa espaços e converte tudo para minúsculo para comparar
+            busca_limpa = nome_busca.strip().lower()
+            
+            # Filtro que ignora erros de digitação comuns e espaços extras
+            resultado = df[df.iloc[:, 0].astype(str).str.lower().str.contains(busca_limpa, na=False)]
             
             if not resultado.empty:
                 for idx, row in resultado.iterrows():
                     linha = row.tolist()
-                    
-                    with st.expander(f"👤 {linha[0]}"):
+                    with st.expander(f"👤 {linha[0].upper()}"):
                         c1, c2, c3 = st.columns(3)
                         with c1:
                             st.markdown("### 📋 Dados Pessoais")
@@ -199,8 +200,13 @@ elif aba == "🔍 Consulta":
                             st.info(f"**Obs:** {linha[20]}")
 
                         # Botão de Documento atualizado para o GitHub
+                        # O BOTÃO AGORA ABRE UM LINK DIRETO (Sem erro de Request)
                         if len(linha) > 21 and "http" in str(linha[21]):
-                            st.link_button("📂 Abrir Documento Anexado", linha[21])
+                            st.link_button("📂 Visualizar Documento", linha[21])
+            else:
+                st.warning(f"Nenhum registro encontrado para '{nome_busca}'. Verifique a planilha.")
+        except Exception as e:
+            st.error(f"Erro na consulta: {e}")
                         
                         st.divider()
                         col_pri, col_ed, col_ex = st.columns(3)
