@@ -75,27 +75,26 @@ if aba == "Novo Cadastro":
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
         # --- AJUSTE AQUI: Campos com trava de números ---
 # --- RG com trava de letras e bloqueio de preenchimento automático ---
+# --- RG com trava e bloqueio reforçado de Autofill ---
         rg_input = st.text_input(
-            "RG (Apenas números)", 
+            "Nº do Registro Geral", # Mudamos o nome para 'despistar' o navegador
             key=f"rg_raw_{fid}", 
-            autocomplete="off",  # Desativa sugestões de cartões/dados
-            help="Digite apenas os números do seu RG"
+            autocomplete="new-password", # Truque técnico: impede sugestões de cartões/senhas
         )
-        rg_txt = re.sub(r'\D', '', rg_input) # Filtra apenas números
+        rg_txt = re.sub(r'\D', '', rg_input)
         if rg_input != rg_txt:
-            st.caption("⚠️ :orange[Remover Letras. Use apenas números no RG.]")
+            st.caption("⚠️ :orange[Letras removidas automaticamente.]")
         
-        # --- CPF com trava de letras e limite de 11 caracteres ---
+        # --- CPF com trava e bloqueio reforçado de Autofill ---
         cpf_input = st.text_input(
-            "CPF (Apenas números)", 
+            "Nº do Documento CPF", # Mudamos o nome para evitar gatilhos de pagamento
             key=f"cpf_raw_{fid}", 
             max_chars=11, 
-            autocomplete="off",  # Desativa sugestões de cartões/dados
-            help="Digite apenas os 11 números do CPF"
+            autocomplete="new-password", # Força o navegador a ignorar o histórico
         )
-        cpf_txt = re.sub(r'\D', '', cpf_input) # Filtra apenas números
+        cpf_txt = re.sub(r'\D', '', cpf_input)
         if cpf_input != cpf_txt:
-            st.caption("⚠️ :orange[Remover Letras. Use apenas números no CPF.]")
+            st.caption("⚠️ :orange[Use apenas os 11 números do CPF.]")
 
     with col2:
         nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
