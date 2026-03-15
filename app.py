@@ -59,12 +59,7 @@ def upload_document_github(member_name, file):
 
 # --- INTERFACE ---
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    try: st.image("logo_igreja.jpeg", width=200)
-    except: st.warning("Logo não encontrado.")
 
-st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
 
 if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 
