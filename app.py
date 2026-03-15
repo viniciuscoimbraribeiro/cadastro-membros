@@ -121,7 +121,8 @@ if aba == "Novo Cadastro":
         nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
         estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
-        pastor = st.text_input("Pastor Responsável", key=f"past_{fid}")
+        pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicavel"], key=f"past_{fid}")
+        #pastor = st.text_input("Pastor Responsável", key=f"past_{fid}")
 
     st.divider()
     st.subheader("👨‍👩‍👧‍👦 Filhos")
