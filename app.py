@@ -210,6 +210,25 @@ elif aba == "🔍 Consulta":
                                 st.markdown("### 📋 Dados")
                                 st.write(f"**Nasc:** {linha[1]}")
                                 st.write(f"**CPF:** {linha[5]}")
+                                # Função interna para formatar CPF
+                                def formatar_cpf(valor):
+                                    # Remove o .0 se existir e transforma em string de números apenas
+                                    cpf_limpo = re.sub(r'\D', '', str(valor).split('.')[0])
+    
+                                    # Se estiver vazio ou for "nan", retorna Não Aplicável
+                                    if not cpf_limpo or cpf_limpo.lower() == "nan":
+                                        return "Não Aplicável"
+    
+                                    # Garante que tenha 11 dígitos (preenche com 0 à esquerda)
+                                    cpf_padrao = cpf_limpo.zfill(11)
+    
+                                    # Aplica a máscara: 000.000.000-00
+                                    return f"{cpf_padrao[:3]}.{cpf_padrao[3:6]}.{cpf_padrao[6:9]}-{cpf_padrao[9:]}"
+
+                                    # Exibição formatada
+                                    st.write(f"**CPF:** {formatar_cpf(linha[5])}")
+                            
+                                
                             with c2:
                                 st.markdown("### 👨‍👩‍👧 Família")
                                 # Cônjuge com tratamento para vazio
