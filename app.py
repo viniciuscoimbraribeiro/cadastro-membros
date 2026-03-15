@@ -26,14 +26,20 @@ def calcular_idade(data_nasc):
     return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
 
 def upload_document_github(member_name, file):
+    import datetime
     token = st.secrets["GITHUB_TOKEN"]
     # AJUSTE O NOME DO REPOSITÓRIO ABAIXO SE FOR DIFERENTE
     repo = "viniciuscoimbraribeiro/cadastro-membros"
     branch = "main"
+
+    # Gerar um sufixo de tempo para garantir que o nome do arquivo seja ÚNICO
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"{timestamp}_{file.name.replace(' ', '_')}"
     
-    file_name = file.name.replace(" ", "_")
-    path = f"cadastros/{member_name.replace(' ', '_')}/{file_name}"
-    url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    # Criar um caminho de pasta limpo
+    member_folder = member_name.replace(' ', '_').upper()
+    path = f"cadastros/{member_folder}/{file_name}"
+    url = f"https://api.github.com/repos/{repo}/contents/{path}""
     
     content = base64.b64encode(file.getvalue()).decode()
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
@@ -42,8 +48,10 @@ def upload_document_github(member_name, file):
     response = requests.put(url, json=data, headers=headers)
     
     if response.status_code in [200, 201]:
-        return f"https://github.com/{repo}/blob/{branch}/{path}?raw=true"
+        # Retorna o link RAW (Direto) para visualização rápida
+        return f"https://raw.githubusercontent.com/{repo}/{branch}/{path}"
     else:
+        # Se ainda assim der erro de SHA, o erro aparecerá aqui com mais detalhes
         raise Exception(f"Erro GitHub: {response.json().get('message')}")
 
 # --- INTERFACE ---
