@@ -209,28 +209,40 @@ elif aba == "🔍 Consulta":
                             with c1:
                                 st.markdown("### 📋 Dados")
                             
-                                # 1. Definimos a função de limpeza (mata o .0 e garante zeros à esquerda)
-                            def formatar_documento(valor, tamanho):
-                                if not valor or str(valor).lower() in ["nan", "none", ""]:
-                                    return "Não Aplicável"
-                                # Remove o .0 e pega apenas os números
-                                limpo = re.sub(r'\D', '', str(valor).split('.')[0])
-                                return limpo.zfill(tamanho)
+                                def formatar_documento(valor, tamanho):
+                                    # 1. Tratamento para nulos/vazios
+                                    val_str = str(valor).strip().lower()
+                                    if val_str in ["nan", "none", "", "nan.0"]:
+                                        return "Não Aplicável"
+                                
+                                    # 2. Remove o .0 caso o Pandas tenha lido como float
+                                    if val_str.endswith('.0'):
+                                        val_str = val_str[:-2]
+                                
+                                    # 3. Mantém APENAS números
+                                    import re
+                                    limpo = re.sub(r'\D', '', val_str)
+                                
+                                    if not limpo:
+                                        return "Não Aplicável"
+                                    
+                                    return limpo.zfill(tamanho)
 
-                            # 2. Formatamos o CPF com a máscara
-                            cpf_num = formatar_documento(linha[5], 11)
-                            if cpf_num != "Não Aplicável":
-                                cpf_formatado = f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
+                            # --- Processamento ---
+                            # CPF (Índice 5)
+                            cpf_limpo = formatar_documento(linha[5], 11)
+                            if cpf_limpo != "Não Aplicável":
+                                cpf_f = f"{cpf_limpo[:3]}.{cpf_limpo[3:6]}.{cpf_limpo[6:9]}-{cpf_limpo[9:]}"
                             else:
-                                cpf_formatado = cpf_num
+                                cpf_f = "Não Aplicável"
 
-                            # 3. Formatamos o RG (geralmente 9 dígitos, mas varia, então apenas limpamos o .0)
-                            rg_formatado = formatar_documento(linha[4], 1) # 1 aqui apenas para não sumir com RGs curtos
+                            # RG (Índice 4)
+                            rg_f = formatar_documento(linha[4], 1)
 
-                            # 4. Exibição na tela
+                            # --- Exibição Final ---
                             st.write(f"**Nasc:** {linha[1]}")
-                            st.write(f"**CPF:** {cpf_formatado}")
-                            st.write(f"**RG:** {rg_formatado}")
+                            st.write(f"**CPF:** {cpf_f}")
+                            st.write(f"**RG:** {rg_f}")
                             st.write(f"**Profissão:** {linha[3]}")
                             
                             with c2:
