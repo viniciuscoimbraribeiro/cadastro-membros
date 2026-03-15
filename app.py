@@ -350,7 +350,7 @@ elif aba == "🔍 Consulta":
                                 c_save, c_cancel = st.columns(2)
                                 
                                 btn_salvar = c_save.form_submit_button("💾 Salvar Alterações")
-                                btn_cancelar = c_cancel.form_submit_button("❌ Cancelar")
+                                btn_cancelar = c_cancel.form_submit_button("❌ Cancelar", key=f"btn_cancel_form_{idx}")
 
                                 if btn_salvar:
                                     # Atualiza os dados no DataFrame
