@@ -83,7 +83,7 @@ if aba == "Novo Cadastro":
         )
         rg_txt = re.sub(r'\D', '', rg_input) # Filtra apenas números
         if rg_input != rg_txt:
-            st.caption("⚠️ :orange[Letras removidas. Use apenas números no RG.]")
+            st.caption("⚠️ :orange[Remover Letras. Use apenas números no RG.]")
         
         # --- CPF com trava de letras e limite de 11 caracteres ---
         cpf_input = st.text_input(
@@ -95,7 +95,7 @@ if aba == "Novo Cadastro":
         )
         cpf_txt = re.sub(r'\D', '', cpf_input) # Filtra apenas números
         if cpf_input != cpf_txt:
-            st.caption("⚠️ :orange[Letras removidas. Use apenas números no CPF.]")
+            st.caption("⚠️ :orange[Remover Letras. Use apenas números no CPF.]")
 
     with col2:
         nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
