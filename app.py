@@ -17,7 +17,7 @@ with col_l2:
     except:
         st.warning("Logo não encontrado.")
 
-st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
+#st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
 
 
 # Conexão da planilha via Secrets (Mantida para os dados)
