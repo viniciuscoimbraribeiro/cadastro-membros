@@ -206,7 +206,7 @@ elif aba == "🔍 Consulta":
                         if not st.session_state[edit_key]:
                             # --- MODO VISUALIZAÇÃO ---
                             c1, c2, c3 = st.columns(3)
-                            with c1:with c1:
+                            with c1:
                             st.markdown("### 📋 Dados")
                             import re
 
