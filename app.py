@@ -17,7 +17,7 @@ with col_l2:
     except:
         st.warning("Logo não encontrado.")
 
-#st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
 
 
 # Conexão da planilha via Secrets (Mantida para os dados)
@@ -82,7 +82,7 @@ if aba == "Novo Cadastro":
     with col1:
         nome = st.text_input("Nome Completo", key=f"nome_{fid}")
         nascimento = st.date_input("Data de Nascimento", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
-        endereco = st.text_input("Endereço", key=f"end_{fid}")
+        endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
         # --- AJUSTE AQUI: Campos com trava de números ---
 # --- RG com trava de letras e bloqueio de preenchimento automático ---
@@ -161,18 +161,73 @@ if aba == "Novo Cadastro":
                 st.error(f"Erro: {e}")
 
 elif aba == "🔍 Consulta":
-    st.header("🔍 Pesquisar Membro")
-    nome_busca = st.text_input("Nome do membro")
+    st.header("🔍 Consultar Membros")
+    nome_busca = st.text_input("Digite o nome para pesquisar")
+    
     if nome_busca:
-        df = conn.read()
-        resultado = df[df.iloc[:, 0].str.contains(nome_busca, case=False, na=False)]
-        if not resultado.empty:
-            for idx, row in resultado.iterrows():
-                with st.expander(f"👤 {row.iloc[0]}"):
-                    st.write(f"**Nascimento:** {row.iloc[1]}")
-                    if row.iloc[20] != "Não Anexado":
-                        st.link_button("📂 Ver Documento", row.iloc[20])
-        else: st.warning("Nenhum registro encontrado.")
+        try:
+            df = conn.read()
+            # Filtra o nome (ignora maiúsculas/minúsculas)
+            resultado = df[df.iloc[:, 0].str.contains(nome_busca, case=False, na=False)]
+            
+            if not resultado.empty:
+                for idx, row in resultado.iterrows():
+                    linha = row.tolist()
+                    
+                    with st.expander(f"👤 {linha[0]}"):
+                        c1, c2, c3 = st.columns(3)
+                        with c1:
+                            st.markdown("### 📋 Dados Pessoais")
+                            st.write(f"**Nascimento:** {linha[1]}")
+                            st.write(f"**RG:** {linha[4]}")
+                            st.write(f"**CPF:** {linha[5]}")
+                            st.write(f"**Endereço:** {linha[2]}")
+                            st.write(f"**Profissão:** {linha[3]}")
+                        with c2:
+                            st.markdown("### 👨‍👩‍👧 Família")
+                            st.write(f"**Estado Civil:** {linha[9]}")
+                            st.write(f"**Cônjuge:** {linha[6]}")
+                            st.write(f"**Pai:** {linha[7]}")
+                            st.write(f"**Mãe:** {linha[8]}")
+                            st.write(f"**Filho 1:** {linha[10]} ({linha[12]} anos)")
+                        with c3:
+                            st.markdown("### ⛪ Igreja")
+                            st.write(f"**Pastor:** {linha[19]}") 
+                            st.info(f"**Obs:** {linha[20]}")
+
+                        # Botão de Documento atualizado para o GitHub
+                        if len(linha) > 21 and "http" in str(linha[21]):
+                            st.link_button("📂 Abrir Documento Anexado", linha[21])
+                        
+                        st.divider()
+                        col_pri, col_ed, col_ex = st.columns(3)
+                        
+                        if col_pri.button("🖨️ Imprimir", key=f"print_{idx}"):
+                            # Script para abrir janela de impressão
+                            html_print = f"""
+                            <script>
+                                var win = window.open('', '_blank');
+                                win.document.write('<html><body><h2>Ficha de Membro</h2><hr>');
+                                win.document.write('<p><b>Nome:</b> {linha[0]}</p>');
+                                win.document.write('<p><b>CPF:</b> {linha[5]}</p>');
+                                win.document.write('<p><b>Endereço:</b> {linha[2]}</p>');
+                                win.document.write('</body></html>');
+                                win.document.close();
+                                win.print();
+                            </script>
+                            """
+                            st.components.v1.html(html_print, height=0)
+
+                        if col_ed.button("📝 Editar", key=f"ed_{idx}"):
+                            st.info("Para editar, acesse a planilha do Google diretamente.")
+
+                        if col_ex.button("🗑️ Excluir", key=f"del_{idx}"):
+                            st.warning("A remoção deve ser feita na planilha principal.")
+
+            else:
+                st.warning("Nenhum membro encontrado.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados: {e}")
 
 elif aba == "📊 Estatísticas":
     st.info("Funcionalidade em desenvolvimento.")
