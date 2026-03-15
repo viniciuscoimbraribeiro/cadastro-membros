@@ -318,9 +318,9 @@ elif aba == "🔍 Consulta":
                                         data_atual_dt = pd.to_datetime(linha[1], dayfirst=True).date()
                                     except:
                                         data_atual_dt = date.today() # Caso a data na planilha esteja inválid
-                                    n_nasc = st.date_input("Nascimento", value=data_atual_dt, format="DD/MM/YYYY")
+                                    #n_nasc = st.date_input("Nascimento", value=data_atual_dt, format="DD/MM/YYYY")
                                     n_end = st.text_input("Endereço", value=linha[2])
-                                    n_cpf = st.text_input("CPF", value=linha[5])
+                                    #n_cpf = st.text_input("CPF", value=linha[5])
                                 with col_e2:
                                     n_conj = st.text_input("Cônjuge", value=linha[6])
                                     n_pastor = st.text_input("Pastor", value=linha[19])
