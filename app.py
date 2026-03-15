@@ -168,6 +168,7 @@ elif aba == "🔍 Consulta":
     
     if nome_busca:
         try:
+            # Lendo a planilha
             df = conn.read()
             
             # FILTRO "MÁGICO": Ignora espaços, maiúsculas e acentos
@@ -177,8 +178,10 @@ elif aba == "🔍 Consulta":
                              if unicodedata.category(c) != 'Mn').lower().strip()
 
             busca_limpa = normalizar(nome_busca)
+            
             # Aplica o filtro na primeira coluna (Nome)
-            resultado = df[df.iloc[:, 0].apply(normalizar).str.contains(busca_limpa, na=False)]
+            # O .astype(str) garante que não dê erro se houver número na coluna de nome
+            resultado = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)]
             
             if not resultado.empty:
                 for idx, row in resultado.iterrows():
@@ -205,27 +208,37 @@ elif aba == "🔍 Consulta":
                             st.write(f"**Pastor:** {linha[19]}") 
                             st.info(f"**Obs:** {linha[20]}")
 
-                        # Botão de Documento (Link Direto para evitar Rate Limit)
+                        # Botão de Documento (Link Direto/Raw para evitar erro de Too Many Requests)
                         if len(linha) > 21 and "http" in str(linha[21]):
                             st.link_button("📂 Visualizar Documento", linha[21], use_container_width=True)
                         
-                        # --- BOTÕES DE AÇÃO (Agora no lugar certo) ---
                         st.divider()
                         col_pri, col_ed, col_ex = st.columns(3)
                         
                         if col_pri.button("🖨️ Imprimir", key=f"print_{idx}"):
-                            st.write("Abrindo janela de impressão...")
-                            # (Código de impressão aqui...)
+                            # Script para abrir janela de impressão
+                            html_print = f"""
+                            <script>
+                                var win = window.open('', '_blank');
+                                win.document.write('<html><body style="font-family:sans-serif;"><h2>Ficha de Membro</h2><hr>');
+                                win.document.write('<p><b>Nome:</b> {linha[0]}</p>');
+                                win.document.write('<p><b>CPF:</b> {linha[5]}</p>');
+                                win.document.write('<p><b>Endereço:</b> {linha[2]}</p>');
+                                win.document.write('</body></html>');
+                                win.document.close();
+                                win.print();
+                            </script>
+                            """
+                            st.components.v1.html(html_print, height=0)
 
                         if col_ed.button("📝 Editar", key=f"ed_{idx}"):
-                            st.info("Edite diretamente na Planilha Google.")
+                            st.info("Para editar, acesse a planilha do Google diretamente.")
 
                         if col_ex.button("🗑️ Excluir", key=f"del_{idx}"):
-                            st.warning("A exclusão deve ser feita na planilha.")
-
+                            st.warning("A remoção deve ser feita na planilha principal.")
             else:
-                st.warning(f"Nenhum registro encontrado para '{nome_busca}'.")
-                
+                st.warning(f"Nenhum membro encontrado para '{nome_busca}'.")
+
         except Exception as e:
             st.error(f"Erro ao carregar dados: {e}")
                         
