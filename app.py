@@ -83,7 +83,7 @@ if aba == "Novo Cadastro":
         )
         rg_txt = re.sub(r'\D', '', rg_input)
         if rg_input != rg_txt:
-            st.caption("⚠️ :orange[Letras removidas automaticamente.]")
+            st.caption("⚠️ :orange[Use apenas Números.]")
         
         # --- CPF com trava e bloqueio reforçado de Autofill ---
         cpf_input = st.text_input(
