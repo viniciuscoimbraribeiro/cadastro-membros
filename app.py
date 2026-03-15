@@ -6,10 +6,7 @@ import base64
 import re
 from streamlit_gsheets import GSheetsConnection
 import locale
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-except:
-    locale.setlocale(locale.LC_ALL, 'pt_BR') # Para sistemas que não usam UTF-8
+
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
