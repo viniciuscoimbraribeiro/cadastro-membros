@@ -207,32 +207,32 @@ elif aba == "🔍 Consulta":
                             # --- MODO VISUALIZAÇÃO ---
                             c1, c2, c3 = st.columns(3)
                             with c1:
-                            st.markdown("### 📋 Dados")
-                            import re
+                                st.markdown("### 📋 Dados")
+                                import re
 
-                            # --- LIMPEZA DO CPF ---
-                            raw_cpf = str(linha[5]).strip()
-                            # Remove .0 do final, espaços e qualquer caractere que não seja número
-                            if raw_cpf.endswith('.0'): raw_cpf = raw_cpf[:-2]
-                            cpf_limpo = re.sub(r'\D', '', raw_cpf)
+                                # --- LIMPEZA DO CPF ---
+                                raw_cpf = str(linha[5]).strip()
+                                # Remove .0 do final, espaços e qualquer caractere que não seja número
+                                if raw_cpf.endswith('.0'): raw_cpf = raw_cpf[:-2]
+                                    cpf_limpo = re.sub(r'\D', '', raw_cpf)
                             
-                            if len(cpf_limpo) >= 1:
-                                cpf_num = cpf_limpo.zfill(11)
-                                cpf_f = f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
-                            else:
-                                cpf_f = "Não Aplicável"
+                                if len(cpf_limpo) >= 1:
+                                    cpf_num = cpf_limpo.zfill(11)
+                                    cpf_f = f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
+                                else:
+                                    cpf_f = "Não Aplicável"
 
-                            # --- LIMPEZA DO RG ---
-                            raw_rg = str(linha[4]).strip()
-                            if raw_rg.endswith('.0'): raw_rg = raw_rg[:-2]
-                            rg_f = re.sub(r'\D', '', raw_rg)
-                            if not rg_f: rg_f = "Não Aplicável"
+                                # --- LIMPEZA DO RG ---
+                                raw_rg = str(linha[4]).strip()
+                                if raw_rg.endswith('.0'): raw_rg = raw_rg[:-2]
+                                rg_f = re.sub(r'\D', '', raw_rg)
+                                if not rg_f: rg_f = "Não Aplicável"
 
-                            # --- EXIBIÇÃO DIRETA ---
-                            st.write(f"**Nasc:** {linha[1]}")
-                            st.write(f"**CPF:** {cpf_f}")
-                            st.write(f"**RG:** {rg_f}")
-                            st.write(f"**Profissão:** {linha[3]}")
+                                # --- EXIBIÇÃO DIRETA ---
+                                st.write(f"**Nasc:** {linha[1]}")
+                                st.write(f"**CPF:** {cpf_f}")
+                                st.write(f"**RG:** {rg_f}")
+                                st.write(f"**Profissão:** {linha[3]}")
                             
                             with c2:
                                 st.markdown("### 👨‍👩‍👧 Família")
