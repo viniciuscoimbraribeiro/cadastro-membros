@@ -212,8 +212,34 @@ elif aba == "🔍 Consulta":
                                 st.write(f"**CPF:** {linha[5]}")
                             with c2:
                                 st.markdown("### 👨‍👩‍👧 Família")
-                                st.write(f"**Cônjuge:** {linha[6]}")
-                                st.write(f"**Filho 1:** {linha[10]}")
+                                # Cônjuge com tratamento para vazio
+                                conjuge = linha[6] if str(linha[6]).strip() and str(linha[6]) != "nan" else "Não Aplicável"
+                                st.write(f"**Cônjuge:** {conjuge}")
+                            
+                                st.divider() # Pequena linha para separar cônjuge de filhos
+                                st.write("**Lista de Filhos:**")
+
+                                # Função rápida para tratar campos vazios ou 'nan' (comum em planilhas)
+                                def tratar_campo(valor):
+                                    if not valor or str(valor).lower() in ["nan", "none", ""]:
+                                        return "Não Aplicável"
+                                    return valor
+
+                                # Exibição dos 3 Filhos (Colunas 10, 13 e 16 da sua planilha)
+                                # Filho 1: Nome (linha[10]), Idade (linha[12])
+                                f1_nome = tratar_campo(linha[10])
+                                f1_idade = linha[12] if f1_nome != "Não Aplicável" else "-"
+                                st.write(f"👶 **1º:** {f1_nome} ({f1_idade} anos)")
+
+                                # Filho 2: Nome (linha[13]), Idade (linha[15])
+                                f2_nome = tratar_campo(linha[13])
+                                f2_idade = linha[15] if f2_nome != "Não Aplicável" else "-"
+                                st.write(f"👶 **2º:** {f2_nome} ({f2_idade} anos)")
+
+                                # Filho 3: Nome (linha[16]), Idade (linha[18])
+                                f3_nome = tratar_campo(linha[16])
+                                f3_idade = linha[18] if f3_nome != "Não Aplicável" else "-"
+                                st.write(f"👶 **3º:** {f3_nome} ({f3_idade} anos)")
                             with c3:
                                 st.markdown("### ⛪ Igreja")
                                 st.write(f"**Pastor:** {linha[19]}")
