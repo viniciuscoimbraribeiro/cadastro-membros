@@ -309,64 +309,72 @@ elif aba == "🔍 Consulta":
 
                         else:
                             # --- MODO EDIÇÃO ---
-   # --- MODO EDIÇÃO ---
+# --- MODO EDIÇÃO ---
                             st.markdown(f"### 📝 Editando: {linha[0]}")
                             
                             with st.form(key=f"form_edit_{idx}"):
                                 col_e1, col_e2 = st.columns(2)
                                 
-                                # Lista de opções para o Estado Civil
+                                # 1. LIMPEZA DO CPF PARA O CAMPO DE TEXTO
+                                import re
+                                raw_cpf_edit = str(linha[5]).strip()
+                                if raw_cpf_edit.endswith('.0'):
+                                    raw_cpf_edit = raw_cpf_edit[:-2]
+                                cpf_limpo_edit = re.sub(r'\D', '', raw_cpf_edit)
+
+                                # 2. LÓGICA DO ESTADO CIVIL
                                 opcoes_civil = ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"]
-                                
-                                # Descobrir qual o índice atual do estado civil na lista (evita o erro do Selectbox)
                                 try:
-                                    valor_atual = str(linha[9]).strip()
-                                    idx_civil = opcoes_civil.index(valor_atual)
-                                except:
-                                    idx_civil = 0 # Caso não encontre, volta para o primeiro da lista
+                                    idx_civil = opcoes_civil.index(str(linha[9]).strip())
+                                if except:
+                                    idx_civil = 0
 
                                 with col_e1:
                                     n_nome = st.text_input("Nome", value=linha[0])
                                     
-                                    # Tratamento da data para o calendário
+                                    # Tratamento de Data
                                     try:
-                                        data_atual_dt = pd.to_datetime(linha[1], dayfirst=True).date()
+                                        data_dt = pd.to_datetime(linha[1], dayfirst=True).date()
                                     except:
                                         from datetime import date
-                                        data_atual_dt = date.today()
+                                        data_dt = date.today()
                                     
-                                    n_nasc = st.date_input("Nascimento", value=data_atual_dt, format="DD/MM/YYYY")
+                                    n_nasc = st.date_input("Nascimento", value=data_dt, format="DD/MM/YYYY")
                                     n_end = st.text_input("Endereço", value=linha[2])
-                                    n_cpf = st.text_input("CPF", value=linha[5])
+                                    # CPF LIMPO AQUI:
+                                    n_cpf = st.text_input("CPF", value=cpf_limpo_edit)
 
                                 with col_e2:
-                                    # Corrigido: usamos 'index' em vez de 'value'
                                     n_estado_civil = st.selectbox("Estado Civil", opcoes_civil, index=idx_civil)
                                     n_conj = st.text_input("Cônjuge", value=linha[6])
                                     n_pastor = st.text_input("Pastor", value=linha[19])
                                     n_obs = st.text_area("Observações", value=linha[20])
                                 
-                                # IMPORTANTE: Os botões DEVEM estar dentro do 'with st.form'
+                                # BOTÕES COM KEYS ÚNICAS
                                 c_save, c_cancel = st.columns(2)
-                                
                                 btn_salvar = c_save.form_submit_button("💾 Salvar Alterações")
-                                btn_cancelar = c_cancel.form_submit_button("❌ Cancelar", key=f"btn_cancel_form_{idx}")
+                                btn_cancelar = c_cancel.form_submit_button("❌ Cancelar", key=f"btn_canc_{idx}")
 
                                 if btn_salvar:
-                                    # Atualiza os dados no DataFrame
+                                    # Limpeza final do CPF antes de salvar na planilha
+                                    cpf_final = re.sub(r'\D', '', n_cpf)
+                                    
                                     df.at[idx, df.columns[0]] = n_nome
-                                    df.at[idx, df.columns[1]] = n_nasc.strftime('%d/%m/%Y') # Salva como texto formatado
+                                    df.at[idx, df.columns[1]] = n_nasc.strftime('%d/%m/%Y')
                                     df.at[idx, df.columns[2]] = n_end
-                                    df.at[idx, df.columns[5]] = n_cpf
+                                    df.at[idx, df.columns[5]] = cpf_final
                                     df.at[idx, df.columns[6]] = n_conj
                                     df.at[idx, df.columns[9]] = n_estado_civil
                                     df.at[idx, df.columns[19]] = n_pastor
                                     df.at[idx, df.columns[20]] = n_obs
                                     
-                                    conn.update(data=df)
-                                    st.success("Dados atualizados com sucesso!")
-                                    st.session_state[edit_key] = False
-                                    st.rerun()
+                                    try:
+                                        conn.update(data=df)
+                                        st.success("Dados atualizados!")
+                                        st.session_state[edit_key] = False
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error("Erro ao salvar no Google. Tente novamente em instantes.")
                                 
                                 if btn_cancelar:
                                     st.session_state[edit_key] = False
