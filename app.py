@@ -206,40 +206,29 @@ elif aba == "🔍 Consulta":
                         if not st.session_state[edit_key]:
                             # --- MODO VISUALIZAÇÃO ---
                             c1, c2, c3 = st.columns(3)
-                            with c1:
-                                st.markdown("### 📋 Dados")
-                            
-                                def formatar_documento(valor, tamanho):
-                                    # 1. Tratamento para nulos/vazios
-                                    val_str = str(valor).strip().lower()
-                                    if val_str in ["nan", "none", "", "nan.0"]:
-                                        return "Não Aplicável"
-                                
-                                    # 2. Remove o .0 caso o Pandas tenha lido como float
-                                    if val_str.endswith('.0'):
-                                        val_str = val_str[:-2]
-                                
-                                    # 3. Mantém APENAS números
-                                    import re
-                                    limpo = re.sub(r'\D', '', val_str)
-                                
-                                    if not limpo:
-                                        return "Não Aplicável"
-                                    
-                                    return limpo.zfill(tamanho)
+                            with c1:with c1:
+                            st.markdown("### 📋 Dados")
+                            import re
 
-                            # --- Processamento ---
-                            # CPF (Índice 5)
-                            cpf_limpo = formatar_documento(linha[5], 11)
-                            if cpf_limpo != "Não Aplicável":
-                                cpf_f = f"{cpf_limpo[:3]}.{cpf_limpo[3:6]}.{cpf_limpo[6:9]}-{cpf_limpo[9:]}"
+                            # --- LIMPEZA DO CPF ---
+                            raw_cpf = str(linha[5]).strip()
+                            # Remove .0 do final, espaços e qualquer caractere que não seja número
+                            if raw_cpf.endswith('.0'): raw_cpf = raw_cpf[:-2]
+                            cpf_limpo = re.sub(r'\D', '', raw_cpf)
+                            
+                            if len(cpf_limpo) >= 1:
+                                cpf_num = cpf_limpo.zfill(11)
+                                cpf_f = f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
                             else:
                                 cpf_f = "Não Aplicável"
 
-                            # RG (Índice 4)
-                            rg_f = formatar_documento(linha[4], 1)
+                            # --- LIMPEZA DO RG ---
+                            raw_rg = str(linha[4]).strip()
+                            if raw_rg.endswith('.0'): raw_rg = raw_rg[:-2]
+                            rg_f = re.sub(r'\D', '', raw_rg)
+                            if not rg_f: rg_f = "Não Aplicável"
 
-                            # --- Exibição Final ---
+                            # --- EXIBIÇÃO DIRETA ---
                             st.write(f"**Nasc:** {linha[1]}")
                             st.write(f"**CPF:** {cpf_f}")
                             st.write(f"**RG:** {rg_f}")
