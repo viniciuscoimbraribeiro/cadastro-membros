@@ -214,7 +214,7 @@ elif aba == "🔍 Consulta":
                                 raw_cpf = str(linha[5]).strip()
                                 # Remove .0 do final, espaços e qualquer caractere que não seja número
                                 if raw_cpf.endswith('.0'): raw_cpf = raw_cpf[:-2]
-                                    cpf_limpo = re.sub(r'\D', '', raw_cpf)
+                                cpf_limpo = re.sub(r'\D', '', raw_cpf)
                             
                                 if len(cpf_limpo) >= 1:
                                     cpf_num = cpf_limpo.zfill(11)
