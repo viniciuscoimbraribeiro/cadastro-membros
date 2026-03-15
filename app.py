@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
-import os
 import requests
 import base64
+import re
 from streamlit_gsheets import GSheetsConnection
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
