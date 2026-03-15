@@ -15,7 +15,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # --- FUNÇÕES DE APOIO ---
 
 def salvar_na_planilha(dados_nova_linha):
-    df_atual = conn.read() 
+    df_atual = conn.read(ttl=0) 
     df_novo_registro = pd.DataFrame([dados_nova_linha], columns=df_atual.columns)
     df_final = pd.concat([df_atual, df_novo_registro], ignore_index=True)
     conn.update(data=df_final)
@@ -169,7 +169,7 @@ elif aba == "🔍 Consulta":
     if nome_busca:
         try:
             # Lendo a planilha
-            df = conn.read()
+            df = conn.read(ttl=0)
             
             # FILTRO "MÁGICO": Ignora espaços, maiúsculas e acentos
             def normalizar(texto):
