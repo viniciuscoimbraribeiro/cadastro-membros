@@ -17,7 +17,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # --- FUNÇÕES DE APOIO ---
 
 def salvar_na_planilha(dados_nova_linha):
-    df_atual = conn.read(ttl=0) 
+    df_atual = conn.read(ttl="10s") 
     df_novo_registro = pd.DataFrame([dados_nova_linha], columns=df_atual.columns)
     df_final = pd.concat([df_atual, df_novo_registro], ignore_index=True)
     conn.update(data=df_final)
@@ -182,7 +182,7 @@ elif aba == "🔍 Consulta":
     if nome_busca or botao_buscar:
         try:
             # Forçamos a leitura sem cache para garantir dados frescos
-            df = conn.read(ttl=0)
+            df = conn.read(ttl="10s")
             
             def normalizar(texto):
                 import unicodedata
