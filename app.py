@@ -372,9 +372,7 @@ elif aba == "🔍 Consulta":
                                     st.session_state[edit_key] = False
                                     st.rerun()
                                 
-                                if c_cancel.form_submit_button("❌ Cancelar"):
-                                    st.session_state[edit_key] = False
-                                    st.rerun()
+
             else:
                 st.warning("Nenhum membro encontrado.")
         except Exception as e:
