@@ -74,15 +74,28 @@ if aba == "Novo Cadastro":
         endereco = st.text_input("Endereço", key=f"end_{fid}")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
         # --- AJUSTE AQUI: Campos com trava de números ---
-        rg_input = st.text_input("RG (Apenas números)", key=f"rg_raw_{fid}")
-        rg_txt = re.sub(r'\D', '', rg_input) # Remove tudo que não for número
+# --- RG com trava de letras e bloqueio de preenchimento automático ---
+        rg_input = st.text_input(
+            "RG (Apenas números)", 
+            key=f"rg_raw_{fid}", 
+            autocomplete="off",  # Desativa sugestões de cartões/dados
+            help="Digite apenas os números do seu RG"
+        )
+        rg_txt = re.sub(r'\D', '', rg_input) # Filtra apenas números
+        if rg_input != rg_txt:
+            st.caption("⚠️ :orange[Letras removidas. Use apenas números no RG.]")
         
-        cpf_input = st.text_input("CPF (Apenas números)", key=f"cpf_raw_{fid}", max_chars=11)
-        cpf_txt = re.sub(r'\D', '', cpf_input) # Remove tudo que não for número
-        
-        # Feedback visual para o usuário
-        if rg_input != rg_txt or cpf_input != cpf_txt:
-            st.warning("⚠️ Letras ou símbolos foram removidos. Use apenas números.")
+        # --- CPF com trava de letras e limite de 11 caracteres ---
+        cpf_input = st.text_input(
+            "CPF (Apenas números)", 
+            key=f"cpf_raw_{fid}", 
+            max_chars=11, 
+            autocomplete="off",  # Desativa sugestões de cartões/dados
+            help="Digite apenas os 11 números do CPF"
+        )
+        cpf_txt = re.sub(r'\D', '', cpf_input) # Filtra apenas números
+        if cpf_input != cpf_txt:
+            st.caption("⚠️ :orange[Letras removidas. Use apenas números no CPF.]")
 
     with col2:
         nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
