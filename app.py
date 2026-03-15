@@ -7,6 +7,25 @@ import re
 from streamlit_gsheets import GSheetsConnection
 
 
+# Função 1: Para limpar CPF (Mata o .0 e formata com pontos/traço)
+def limpar_e_formatar_cpf(valor):
+    if not valor or str(valor).lower() in ["nan", "none", ""]:
+        return "Não Aplicável"
+    # Remove .0 e qualquer coisa que não seja número
+    limpo = re.sub(r'\D', '', str(valor).split('.')[0])
+    if not limpo: return "Não Aplicável"
+    # Garante 11 dígitos e aplica máscara
+    c = limpo.zfill(11)
+    return f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
+
+# Função 2: Para limpar RG (Apenas mata o .0)
+def limpar_rg(valor):
+    if not valor or str(valor).lower() in ["nan", "none", ""]:
+        return "Não Aplicável"
+    return re.sub(r'\D', '', str(valor).split('.')[0])
+
+
+
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
