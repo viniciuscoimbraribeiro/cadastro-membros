@@ -228,7 +228,6 @@ elif aba == "🔍 Consulta de Membros":
                 df = conn.read(ttl="10s")
                 
                 def normalizar(texto):
-                    
                     return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                                  if unicodedata.category(c) != 'Mn').lower().strip()
     
@@ -499,7 +498,7 @@ elif aba == "🛠️ Catálogo de Serviços":
     st.header("🛠️ Catálogo de Serviços e Profissões")
     st.write("Pesquise por profissionais dentro da nossa comunidade.")
     
-    prof_busca = st.text_input("O que você procura? (Ex: Pedreiro, Advogado, Professor)")
+    prof_busca = st.text_input("O que você procura? (Ex: Pedreiro, Advogado, Calheiro, Encandor, etc...)")
     
     if st.button("🔎 Filtrar Profissionais", key="btn_filtro_catalogo", use_container_width=True):
         if prof_busca:
