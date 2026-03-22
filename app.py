@@ -85,7 +85,7 @@ if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 # --- NAVEGAÇÃO LATERAL ---
 with st.sidebar:
     st.title("Navegação")
-    aba = st.radio("Ir para:", ["📝 Novo Cadastro", "🔍 Consulta de Membros", "Catálogo de Serviços", "📊 Estatísticas"])
+    aba = st.radio("Ir para:", ["📝 Novo Cadastro", "🔍 Consulta de Membros", "🛠️ Catálogo de Serviços", "📊 Estatísticas"])
 
 
 if aba == "📝 Novo Cadastro":
@@ -478,20 +478,26 @@ elif aba == "🔍 Consulta de Membros":
             st.error(f"Erro: {e}")
         pass                            
 
-if st.button("🔎 Filtrar Profissionais"):
+# --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
+elif aba == "🛠️ Catálogo de Serviços":
+    st.header("🛠️ Catálogo de Serviços e Profissões")
+    st.write("Pesquise por profissionais dentro da nossa comunidade.")
+    
+    prof_busca = st.text_input("O que você procura? (Ex: Pedreiro, Advogado, Professor)")
+    
+    if st.button("🔎 Filtrar Profissionais", use_container_width=True):
         if prof_busca:
+            df = conn.read(ttl="10s")
             # Filtra pela Profissão (Coluna 3)
-            encontrados = [l for l in dados if prof_busca.lower() in str(l[3]).lower()]
+            encontrados = df[df.iloc[:, 3].astype(str).str.contains(prof_busca, case=False, na=False)]
             
-            if encontrados:
-                st.info(f"Encontramos {len(encontrados)} contato(s):")
-                for l in encontrados:
-                    # Aqui mostramos apenas o necessário para o público
+            if not encontrados.empty:
+                st.info(f"Encontramos {len(encontrados)} profissional(is):")
+                for _, row in encontrados.iterrows():
                     with st.container():
-                        st.subheader(f"👤 {l[0]}")
-                        st.write(f"🛠️ **Especialidade:** {l[3]}")
-                        # Quando tivermos o telefone (ex: l[22]), ele entra aqui
-                        st.write("📞 **Contato:** (Em breve)") 
+                        st.subheader(f"👤 {row.iloc[0]}")
+                        st.write(f"🛠️ **Especialidade:** {row.iloc[3]}")
+                        st.write("📞 **Contato:** Solicite à secretaria") 
                         st.divider()
             else:
                 st.warning(f"Ainda não temos '{prof_busca}' cadastrado.")
