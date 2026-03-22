@@ -86,7 +86,7 @@ if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 # --- NAVEGAÇÃO LATERAL ---
 with st.sidebar:
     st.title("Navegação")
-    aba_selecionada = st.radio("Ir para:", ["Novo Cadastro", "Consulta", "Estatísticas"])
+    aba_selecionada = st.radio(["Novo Cadastro", "Consulta", "Estatísticas"])
     
 if aba == "Novo Cadastro":
     # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
