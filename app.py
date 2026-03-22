@@ -199,8 +199,8 @@ if aba == "📝 Novo Cadastro":
                 pass 
 elif aba == "🔍 Consulta de Membros":
     st.header("🔍 Consultar e Gerenciar Membros")
-    st.title("🔍 Painel Administrativo - Membros")
-    nome_busca = st.text_input("Digite o nome para pesquisar")    
+    #st.title("🔍 Painel Administrativo - Membros")
+    #nome_busca = st.text_input("Digite o nome para pesquisar")    
     # Campo de texto e botão lado a lado ou um abaixo do outro
     
     nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
