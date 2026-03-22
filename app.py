@@ -277,21 +277,30 @@ elif aba == "🔍 Consulta":
                                         return "Não Aplicável"
                                     return valor
 
-                                # Exibição dos 3 Filhos (Colunas 10, 13 e 16 da sua planilha)
+                                # --- EXIBIÇÃO DOS FILHOS (OCULTA SE VAZIO OU NÃO APLICÁVEL) ---
+                                st.write("**Lista de Filhos:**")
+                                
                                 # Filho 1: Nome (linha[10]), Idade (linha[12])
                                 f1_nome = tratar_campo(linha[10])
-                                f1_idade = linha[12] if f1_nome != "Não Aplicável" else "-"
-                                st.write(f"👶 **1º:** {f1_nome} ({f1_idade} anos)")
-
+                                if f1_nome != "Não Aplicável":
+                                    f1_idade = linha[12]
+                                    st.write(f"👶 **1º:** {f1_nome} ({f1_idade} anos)")
+                                
                                 # Filho 2: Nome (linha[13]), Idade (linha[15])
                                 f2_nome = tratar_campo(linha[13])
-                                f2_idade = linha[15] if f2_nome != "Não Aplicável" else "-"
-                                st.write(f"👶 **2º:** {f2_nome} ({f2_idade} anos)")
-
+                                if f2_nome != "Não Aplicável":
+                                    f2_idade = linha[15]
+                                    st.write(f"👶 **2º:** {f2_nome} ({f2_idade} anos)")
+                                
                                 # Filho 3: Nome (linha[16]), Idade (linha[18])
                                 f3_nome = tratar_campo(linha[16])
-                                f3_idade = linha[18] if f3_nome != "Não Aplicável" else "-"
-                                st.write(f"👶 **3º:** {f3_nome} ({f3_idade} anos)")
+                                if f3_nome != "Não Aplicável":
+                                    f3_idade = linha[18]
+                                    st.write(f"👶 **3º:** {f3_nome} ({f3_idade} anos)")
+                                
+                                # Opcional: Se nenhum dos três existir, você pode mostrar um aviso
+                                if all(tratar_campo(linha[i]) == "Não Aplicável" for i in [10, 13, 16]):
+                                    st.caption("Nenhum filho registrado.")
                             with c3:
                                 st.markdown("### ⛪ Igreja")
                                 st.write(f"**Batizado:** {linha[19]}") # Era Pastor, agora é Batizado
