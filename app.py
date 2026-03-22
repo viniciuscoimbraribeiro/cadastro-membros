@@ -83,11 +83,58 @@ if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 
 #aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta", "📊 Estatísticas"])
 
+
+
 # --- NAVEGAÇÃO LATERAL ---
 with st.sidebar:
     st.title("Navegação")
-    aba_selecionada = st.radio(["Novo Cadastro", "Consulta", "Estatísticas"])
+    aba_selecionada = st.radio("Ir para:", ["Novo Cadastro", "Consulta", "Estatísticas"])
+
+# --- LÓGICA DA PÁGINA DE CONSULTA ---
+if aba_selecionada == "Consulta":
+    st.title("🔍 Consultar e Gerenciar")
     
+    # --- SUB-NAVEGAÇÃO (Abas dentro da Consulta) ---
+    sub_aba = st.tabs(["👤 Por Nome", "💼 Por Profissão"])
+
+    # --- ABA 1: CONSULTA POR NOME (O que você já tinha) ---
+    with sub_aba[0]:
+        nome_busca = st.text_input("Digite o nome para pesquisar")
+        btn_busca = st.button("🔎 Buscar Membro")
+        
+        if btn_busca:
+            # Aqui vai o seu código original de busca por nome
+            st.info(f"Buscando por: {nome_busca}...")
+            # ... (seu código de loop e visualização aqui)
+
+    # --- ABA 2: CONSULTA POR PROFISSÃO (A NOVIDADE) ---
+    with sub_aba[1]:
+        profissao_busca = st.text_input("Digite a profissão (ex: Padeiro, Engenheiro)")
+        btn_busca_prof = st.button("🔎 Buscar Profissionais")
+
+        if btn_busca_prof:
+            if profissao_busca:
+                # Filtrando os dados (assumindo que df é seu DataFrame da planilha)
+                # linha[3] costuma ser a Profissão no seu script
+                resultados = [linha for linha in dados_planilha if profissao_busca.lower() in str(linha[3]).lower()]
+
+                if resultados:
+                    st.success(f"Encontrado(s) {len(resultados)} profissional(is):")
+                    for res in resultados:
+                        with st.expander(f"👤 {res[0]}"): # res[0] é o nome
+                            st.write(f"📅 **Data de Nascimento:** {res[1]}") # res[1] é a data
+                            st.write(f"💼 **Profissão Confirmada:** {res[3]}")
+                            # No futuro, o telefone entrará aqui (ex: res[22])
+                else:
+                    st.warning("Nenhum profissional encontrado com esse termo.")
+            else:
+                st.error("Por favor, digite uma profissão para pesquisar.")
+
+
+
+
+
+
 if aba == "Novo Cadastro":
     # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
