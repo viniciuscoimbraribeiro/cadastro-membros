@@ -198,10 +198,13 @@ if aba == "📝 Novo Cadastro":
                 st.error(f"Erro: {e}")
                 pass 
 elif aba == "🔍 Consulta de Membros":
+
+    # 1. Criar um campo de senha simples
+    senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin")
+  # 2. Verificar a senha (substitua '1234' pela sua senha real)
+    if senha_acesso == "1234":
+        
     st.header("🔍 Consultar e Gerenciar Membros")
-    #st.title("🔍 Painel Administrativo - Membros")
-    #nome_busca = st.text_input("Digite o nome para pesquisar")    
-    # Campo de texto e botão lado a lado ou um abaixo do outro
     
     nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
     botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_membros", use_container_width=True)
@@ -477,7 +480,11 @@ elif aba == "🔍 Consulta de Membros":
         except Exception as e:
             st.error(f"Erro: {e}")
         pass                            
-
+    elif senha_acesso != "":
+            st.error("❌ Senha incorreta. Acesso negado.")
+        else:
+            st.info("Aguardando senha para liberar o painel...")
+            
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
 elif aba == "🛠️ Catálogo de Serviços":
     st.header("🛠️ Catálogo de Serviços e Profissões")
