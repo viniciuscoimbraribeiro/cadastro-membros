@@ -199,10 +199,29 @@ if aba == "📝 Novo Cadastro":
                 pass 
 elif aba == "🔍 Consulta de Membros":
 
-    # 1. Criar um campo de senha simples
-    senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin")
-  # 2. Verificar a senha (substitua '1234' pela sua senha real)
-    if senha_acesso == "1234":
+    # 1. Inicializar o estado de autenticação se não existir
+    if "autenticado_consulta" not in st.session_state:
+        st.session_state.autenticado_consulta = False
+
+    # 2. Se NÃO estiver autenticado, mostra o campo de senha
+    if not st.session_state.autenticado_consulta:
+        senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin")
+        
+        if senha_acesso == "1234": # Substitua pela sua senha
+            st.session_state.autenticado_consulta = True
+            st.rerun() # Recarrega para sumir com o campo de senha imediatamente
+        elif senha_acesso != "":
+            st.error("❌ Senha incorreta.")
+        else:
+            st.info("Aguardando senha para liberar o painel...")
+
+    # 3. Se ESTIVER autenticado, mostra apenas o conteúdo da consulta
+    else:
+        # Botão opcional para "Sair" ou bloquear novamente
+        if st.button("🔒 Bloquear Acesso"):
+            st.session_state.autenticado_consulta = False
+            st.rerun()
+            
             
         st.header("🔍 Consultar e Gerenciar Membros")
         
@@ -480,10 +499,7 @@ elif aba == "🔍 Consulta de Membros":
             except Exception as e:
                 st.error(f"Erro: {e}")
             pass                            
-    elif senha_acesso != "":
-            st.error("❌ Senha incorreta. Acesso negado.")
-    else:
-            st.info("Aguardando senha para liberar o painel...")
+
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
 elif aba == "🛠️ Catálogo de Serviços":
