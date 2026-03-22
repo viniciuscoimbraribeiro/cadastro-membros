@@ -517,7 +517,7 @@ elif aba == "🔍 Consulta":
                 st.warning("Nenhum membro encontrado.")
         except Exception as e:
             st.error(f"Erro: {e}")
-      pass                            
+        pass                            
 
 elif aba == "📊 Estatísticas":
     st.info("Funcionalidade em desenvolvimento.")
