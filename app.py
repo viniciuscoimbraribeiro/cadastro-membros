@@ -368,8 +368,10 @@ elif aba == "🔍 Consulta":
                                 with col_e2:
                                     n_estado_civil = st.selectbox("Estado Civil", opcoes_civil, index=idx_civil)
                                     n_conj = st.text_input("Cônjuge", value=linha[6])
-                                    n_pastor = st.text_input("Pastor", value=linha[19])
-                                    n_obs = st.text_area("Observações", value=linha[20])
+                                    n_batizado = st.selectbox("Batizado", ["Sim", "Não"], index=0 if str(linha[19]) == "Sim" else 1)
+                                    n_pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicavel"], 
+                                                           index=["Adriano", "Albert", "Luis", "Não Aplicavel"].index(linha[20]) if linha[20] in ["Adriano", "Albert", "Luis", "Não Aplicavel"] else 3)
+                                    n_obs = st.text_area("Observações", value=linha[21])
                                 
                                 # BOTÕES COM KEYS ÚNICAS
                                 c_save, c_cancel = st.columns(2)
