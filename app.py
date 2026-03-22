@@ -305,13 +305,58 @@ elif aba == "🔍 Consulta":
                             
                             # 1. BOTÃO IMPRIMIR (Restaurado)
                             if col_pri.button("🖨️ Imprimir", key=f"btn_prt_{idx}"):
+                                # Preparando os dados dos filhos para o HTML (Colunas 10, 13 e 16 são os nomes)
+                                filhos_html = ""
+                                for i in [10, 13, 16]:
+                                    nome_filho = str(linha[i]).strip()
+                                    if nome_filho and nome_filho.lower() != "não aplicável" and nome_filho != "nan":
+                                        idade_filho = linha[i+2]
+                                        filhos_html += f"<li>{nome_filho} ({idade_filho} anos)</li>"
+                                
+                                if not filhos_html:
+                                    filhos_html = "<li>Nenhum filho registrado</li>"
+                            
                                 html_print = f"""
                                 <script>
                                     var win = window.open('', '_blank');
-                                    win.document.write('<html><body><h2>Ficha: {linha[0]}</h2><hr>');
-                                    win.document.write('<p><b>CPF:</b> {linha[5]}</p><p><b>Endereço:</b> {linha[2]}</p>');
+                                    win.document.write('<html><head><title>Ficha de Membro</title>');
+                                    win.document.write('<style>body {{ font-family: sans-serif; padding: 20px; line-height: 1.6; }}');
+                                    win.document.write('h2 {{ text-align: center; color: #333; border-bottom: 2px solid #333; }}');
+                                    win.document.write('.section {{ margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; }}');
+                                    win.document.write('.title {{ font-weight: bold; background: #f4f4f4; padding: 5px; display: block; margin-bottom: 10px; }}');
+                                    win.document.write('p {{ margin: 5px 0; }} b {{ color: #555; }}');
+                                    win.document.write('</style></head><body>');
+                                    
+                                    win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
+                            
+                                    // SEÇÃO 1: DADOS PESSOAIS
+                                    win.document.write('<div class="section"><span class="title">I. DADOS PESSOAIS</span>');
+                                    win.document.write('<p><b>Nome Completo:</b> {linha[0]}</p>');
+                                    win.document.write('<p><b>Data de Nascimento:</b> {linha[1]}</p>');
+                                    win.document.write('<p><b>Endereço:</b> {linha[2]}</p>');
+                                    win.document.write('<p><b>Profissão:</b> {linha[3]}</p>');
+                                    win.document.write('<p><b>RG:</b> {linha[4]} &nbsp;&nbsp;&nbsp; <b>CPF:</b> {linha[5]}</p>');
+                                    win.document.write('<p><b>Estado Civil:</b> {linha[9]}</p></div>');
+                            
+                                    // SEÇÃO 2: FAMÍLIA
+                                    win.document.write('<div class="section"><span class="title">II. FAMÍLIA</span>');
+                                    win.document.write('<p><b>Cônjuge:</b> {linha[6]}</p>');
+                                    win.document.write('<p><b>Pai:</b> {linha[7]}</p>');
+                                    win.document.write('<p><b>Mãe:</b> {linha[8]}</p>');
+                                    win.document.write('<p><b>Filhos:</b></p><ul>' + `{filhos_html}` + '</ul></div>');
+                            
+                                    // SEÇÃO 3: IGREJA E OBSERVAÇÕES
+                                    win.document.write('<div class="section"><span class="title">III. REGISTRO ECLESIÁSTICO</span>');
+                                    win.document.write('<p><b>Batizado:</b> {linha[19]}</p>');
+                                    win.document.write('<p><b>Pastor Responsável:</b> {linha[20]}</p>');
+                                    win.document.write('<p><b>Observações:</b> {linha[21]}</p></div>');
+                            
+                                    win.document.write('<footer style="text-align:center; font-size: 10px; margin-top: 50px;">Gerado em: ' + new Date().toLocaleString() + '</footer>');
                                     win.document.write('</body></html>');
-                                    win.document.close(); win.print();
+                                    win.document.close();
+                                    
+                                    // Pequeno delay para garantir que o estilo carregue antes de abrir a caixa de impressão
+                                    setTimeout(function() {{ win.print(); }}, 500);
                                 </script>"""
                                 st.components.v1.html(html_print, height=0)
 
