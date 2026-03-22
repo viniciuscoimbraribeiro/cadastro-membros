@@ -482,7 +482,7 @@ if senha_acesso == "1234":
         pass                            
     elif senha_acesso != "":
             st.error("❌ Senha incorreta. Acesso negado.")
-        else:
+    else:
             st.info("Aguardando senha para liberar o painel...")
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
