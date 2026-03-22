@@ -202,7 +202,7 @@ elif aba == "🔍 Consulta de Membros":
     # 1. Criar um campo de senha simples
     senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin")
   # 2. Verificar a senha (substitua '1234' pela sua senha real)
-    if senha_acesso == "1234":
+if senha_acesso == "1234":
         
     st.header("🔍 Consultar e Gerenciar Membros")
     
