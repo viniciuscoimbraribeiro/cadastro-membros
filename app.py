@@ -204,7 +204,7 @@ elif aba == "🔍 Consulta de Membros":
     # Campo de texto e botão lado a lado ou um abaixo do outro
     
     nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
-    botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_nome", use_container_width=True)
+    botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_membros", use_container_width=True)
     
     # A busca acontece se apertar ENTER (nome_busca) OU se clicar no BOTÃO (botao_buscar)
     if nome_busca or botao_buscar:
@@ -485,7 +485,7 @@ elif aba == "🛠️ Catálogo de Serviços":
     
     prof_busca = st.text_input("O que você procura? (Ex: Pedreiro, Advogado, Professor)")
     
-    if st.button("🔎 Filtrar Profissionais", use_container_width=True):
+    if st.button("🔎 Filtrar Profissionais", key="btn_filtro_catalogo", use_container_width=True):
         if prof_busca:
             df = conn.read(ttl="10s")
             # Filtra pela Profissão (Coluna 3)
