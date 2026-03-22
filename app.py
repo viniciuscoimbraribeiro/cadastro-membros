@@ -4,7 +4,9 @@ from datetime import date
 import requests
 import base64
 import re
+import datetime
 from streamlit_gsheets import GSheetsConnection
+import unicodedata
 
 
 # Função 1: Para limpar CPF (Mata o .0 e formata com pontos/traço)
@@ -44,7 +46,7 @@ def calcular_idade(data_nasc):
     return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
 
 def upload_document_github(member_name, file):
-    import datetime
+   # import datetime
     token = st.secrets["GITHUB_TOKEN"]
     # AJUSTE O NOME DO REPOSITÓRIO ABAIXO SE FOR DIFERENTE
     repo = "viniciuscoimbraribeiro/cadastro-membros"
@@ -226,7 +228,7 @@ elif aba == "🔍 Consulta de Membros":
                 df = conn.read(ttl="10s")
                 
                 def normalizar(texto):
-                    import unicodedata
+                    
                     return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                                  if unicodedata.category(c) != 'Mn').lower().strip()
     
