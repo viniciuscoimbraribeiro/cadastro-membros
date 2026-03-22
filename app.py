@@ -89,7 +89,6 @@ with st.sidebar:
 
 
 if aba == "Novo Cadastro":
-    st.title("📝 Cadastro de Membros")
     # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
     with col_l2:
