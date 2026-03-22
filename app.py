@@ -240,7 +240,7 @@ if aba == "Novo Cadastro":
                 st.rerun()
             except Exception as e:
                 st.error(f"Erro: {e}")
-       pass 
+                pass 
 elif aba == "🔍 Consulta":
     st.header("🔍 Consultar e Gerenciar Membros")
     # Campo de texto e botão lado a lado ou um abaixo do outro
