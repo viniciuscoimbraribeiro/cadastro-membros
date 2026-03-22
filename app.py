@@ -78,61 +78,18 @@ def upload_document_github(member_name, file):
 
 if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 
-#aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta", "📊 Estatísticas"])
+#aba = st.sidebar.radio("Navegação", ["Novo Cadastro", "🔍 Consulta", "Catálogo de Serviços", "📊 Estatísticas"])
 
 
 
 # --- NAVEGAÇÃO LATERAL ---
 with st.sidebar:
     st.title("Navegação")
-    aba = st.radio("Ir para:", ["Novo Cadastro", "Consulta", "Estatísticas"])
-
-# --- LÓGICA DA PÁGINA DE CONSULTA ---
-if aba == "Consulta":
-    st.title("🔍 Consultar e Gerenciar")
-    
-    # --- SUB-NAVEGAÇÃO (Abas dentro da Consulta) ---
-    sub_aba = st.tabs(["👤 Por Nome", "💼 Por Profissão"])
-
-    # --- ABA 1: CONSULTA POR NOME (O que você já tinha) ---
-    with sub_aba[0]:
-        nome_busca = st.text_input("Digite o nome para pesquisar")
-        btn_busca = st.button("🔎 Buscar Membro")
-        
-        if btn_busca:
-            # Aqui vai o seu código original de busca por nome
-            st.info(f"Buscando por: {nome_busca}...")
-            # ... (seu código de loop e visualização aqui)
-
-    # --- ABA 2: CONSULTA POR PROFISSÃO (A NOVIDADE) ---
-    with sub_aba[1]:
-        profissao_busca = st.text_input("Digite a profissão (ex: Padeiro, Engenheiro)")
-        btn_busca_prof = st.button("🔎 Buscar Profissionais")
-
-        if btn_busca_prof:
-            if profissao_busca:
-                # Filtrando os dados (assumindo que df é seu DataFrame da planilha)
-                # linha[3] costuma ser a Profissão no seu script
-                resultados = [linha for linha in dados_planilha if profissao_busca.lower() in str(linha[3]).lower()]
-
-                if resultados:
-                    st.success(f"Encontrado(s) {len(resultados)} profissional(is):")
-                    for res in resultados:
-                        with st.expander(f"👤 {res[0]}"): # res[0] é o nome
-                            st.write(f"📅 **Data de Nascimento:** {res[1]}") # res[1] é a data
-                            st.write(f"💼 **Profissão Confirmada:** {res[3]}")
-                            # No futuro, o telefone entrará aqui (ex: res[22])
-                else:
-                    st.warning("Nenhum profissional encontrado com esse termo.")
-            else:
-                st.error("Por favor, digite uma profissão para pesquisar.")
-
-
-
-
+    aba = st.radio("Ir para:", ["📝 Novo Cadastro", " 🔍Consulta de Membros", "Catálogo de Serviços", "📊 Estatísticas"])
 
 
 if aba == "Novo Cadastro":
+    st.title("📝 Cadastro de Membros")
     # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
     with col_l2:
@@ -241,9 +198,12 @@ if aba == "Novo Cadastro":
             except Exception as e:
                 st.error(f"Erro: {e}")
                 pass 
-elif aba == "🔍 Consulta":
+elif aba == "🔍 Consulta de Membros":
     st.header("🔍 Consultar e Gerenciar Membros")
+    st.title("🔍 Painel Administrativo - Membros")
+    nome_busca = st.text_input("Digite o nome para pesquisar")    
     # Campo de texto e botão lado a lado ou um abaixo do outro
+    
     nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
     botao_buscar = st.button("🔎 Buscar Membro", use_container_width=True)
     
@@ -518,6 +478,24 @@ elif aba == "🔍 Consulta":
         except Exception as e:
             st.error(f"Erro: {e}")
         pass                            
+
+if st.button("🔎 Filtrar Profissionais"):
+        if prof_busca:
+            # Filtra pela Profissão (Coluna 3)
+            encontrados = [l for l in dados if prof_busca.lower() in str(l[3]).lower()]
+            
+            if encontrados:
+                st.info(f"Encontramos {len(encontrados)} contato(s):")
+                for l in encontrados:
+                    # Aqui mostramos apenas o necessário para o público
+                    with st.container():
+                        st.subheader(f"👤 {l[0]}")
+                        st.write(f"🛠️ **Especialidade:** {l[3]}")
+                        # Quando tivermos o telefone (ex: l[22]), ele entra aqui
+                        st.write("📞 **Contato:** (Em breve)") 
+                        st.divider()
+            else:
+                st.warning(f"Ainda não temos '{prof_busca}' cadastrado.")
 
 elif aba == "📊 Estatísticas":
     st.info("Funcionalidade em desenvolvimento.")
