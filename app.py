@@ -24,9 +24,6 @@ def limpar_rg(valor):
         return "Não Aplicável"
     return re.sub(r'\D', '', str(valor).split('.')[0])
 
-
-
-
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
 
@@ -88,10 +85,10 @@ if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 # --- NAVEGAÇÃO LATERAL ---
 with st.sidebar:
     st.title("Navegação")
-    aba_selecionada = st.radio("Ir para:", ["Novo Cadastro", "Consulta", "Estatísticas"])
+    aba = st.radio("Ir para:", ["Novo Cadastro", "Consulta", "Estatísticas"])
 
 # --- LÓGICA DA PÁGINA DE CONSULTA ---
-if aba_selecionada == "Consulta":
+if aba == "Consulta":
     st.title("🔍 Consultar e Gerenciar")
     
     # --- SUB-NAVEGAÇÃO (Abas dentro da Consulta) ---
@@ -167,8 +164,8 @@ if aba == "Novo Cadastro":
         nascimento = st.date_input("Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
         endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
-
-# --- RG com trava e bloqueio reforçado de Autofill ---
+    
+        # --- RG com trava e bloqueio reforçado de Autofill ---
         rg_input = st.text_input(
             "Nº do Registro Geral", # Mudamos o nome para 'despistar' o navegador
             key=f"rg_raw_{fid}", 
@@ -243,7 +240,7 @@ if aba == "Novo Cadastro":
                 st.rerun()
             except Exception as e:
                 st.error(f"Erro: {e}")
-
+            pass
 elif aba == "🔍 Consulta":
     st.header("🔍 Consultar e Gerenciar Membros")
     # Campo de texto e botão lado a lado ou um abaixo do outro
@@ -520,7 +517,7 @@ elif aba == "🔍 Consulta":
                 st.warning("Nenhum membro encontrado.")
         except Exception as e:
             st.error(f"Erro: {e}")
-                        
+            pass                       
 
 elif aba == "📊 Estatísticas":
     st.info("Funcionalidade em desenvolvimento.")
