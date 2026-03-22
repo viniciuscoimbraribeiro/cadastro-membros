@@ -204,7 +204,7 @@ elif aba == "🔍 Consulta de Membros":
     # Campo de texto e botão lado a lado ou um abaixo do outro
     
     nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
-    botao_buscar = st.button("🔎 Buscar Membro", use_container_width=True)
+    botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_nome", use_container_width=True)
     
     # A busca acontece se apertar ENTER (nome_busca) OU se clicar no BOTÃO (botao_buscar)
     if nome_busca or botao_buscar:
