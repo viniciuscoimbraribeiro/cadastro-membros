@@ -143,7 +143,7 @@ if aba == "Novo Cadastro":
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
         estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
         batizado = st.selectbox("Batizado", ["Sim", "Não"], key=f"bat_{fid}")
-        pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicavel"], key=f"past_{fid}")
+        pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_{fid}")
         
 
     st.divider()
@@ -369,7 +369,6 @@ elif aba == "🔍 Consulta":
                                     n_estado_civil = st.selectbox("Estado Civil", opcoes_civil, index=idx_civil)
                                     n_conj = st.text_input("Cônjuge", value=linha[6])
                                     n_batizado = st.selectbox("Batizado", ["Sim", "Não"], index=0 if str(linha[19]) == "Sim" else 1)
-                                    # Lista de opções padronizada
                                     opcoes_pastor = ["Adriano", "Albert", "Luis", "Não Aplicável"]
                                     
                                     # Tenta encontrar o índice, se não achar, usa o padrão (índice 3)
@@ -394,7 +393,7 @@ elif aba == "🔍 Consulta":
                                     df.at[idx, df.columns[5]] = cpf_final
                                     df.at[idx, df.columns[6]] = n_conj
                                     df.at[idx, df.columns[9]] = n_estado_civil
-                                    df.at[idx, df.columns[19]] = n_batizado # Você precisará criar o campo n_batizado no form de edição
+                                    df.at[idx, df.columns[19]] = n_batizado
                                     df.at[idx, df.columns[20]] = n_pastor
                                     df.at[idx, df.columns[21]] = n_obs
                                     
