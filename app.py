@@ -294,11 +294,11 @@ elif aba == "🔍 Consulta":
                                 st.write(f"👶 **3º:** {f3_nome} ({f3_idade} anos)")
                             with c3:
                                 st.markdown("### ⛪ Igreja")
-                                st.write(f"**Pastor:** {linha[19]}")
-                                st.info(f"**Obs:** {linha[20]}")
-
-                            if len(linha) > 21 and "http" in str(linha[21]):
-                                st.link_button("📂 Visualizar Documento", linha[21], use_container_width=True)
+                                st.write(f"**Batizado:** {linha[19]}") # Era Pastor, agora é Batizado
+                                st.write(f"**Pastor:** {linha[20]}")   # Era Obs, agora é Pastor
+                                st.info(f"**Obs:** {linha[21]}")       # Era link, agora é Obs
+                            if len(linha) > 22 and "http" in str(linha[22]):
+                                st.link_button("📂 Visualizar Documento", linha[22], use_container_width=True)
 
                             st.divider()
                             col_pri, col_ed, col_ex = st.columns(3)
@@ -386,8 +386,9 @@ elif aba == "🔍 Consulta":
                                     df.at[idx, df.columns[5]] = cpf_final
                                     df.at[idx, df.columns[6]] = n_conj
                                     df.at[idx, df.columns[9]] = n_estado_civil
-                                    df.at[idx, df.columns[19]] = n_pastor
-                                    df.at[idx, df.columns[20]] = n_obs
+                                    df.at[idx, df.columns[19]] = n_batizado # Você precisará criar o campo n_batizado no form de edição
+                                    df.at[idx, df.columns[20]] = n_pastor
+                                    df.at[idx, df.columns[21]] = n_obs
                                     
                                     try:
                                         conn.update(data=df)
