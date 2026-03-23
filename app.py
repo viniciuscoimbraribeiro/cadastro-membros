@@ -141,13 +141,7 @@ if aba == "📝 Novo Cadastro":
         dt_nasc_conjuge = st.text_input("Data Nascimento Cônjuge", value="Não Aplicável", key=f"dt_conj_{fid}")
         prof_conjuge = st.text_input("Profissão do Cônjuge", value="Não Aplicável", key=f"prof_conj_{fid}")
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
-        nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")
-
-    st.divider()
-    st.subheader("⛪ Igreja")
-    batizado = st.selectbox("Batizado", ["Sim", "Não"], key=f"bat_{fid}")
-    pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_{fid}")
-        
+        nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")  
 
     st.divider()
     st.subheader("👨‍👩‍👧‍👦 Filhos")
@@ -164,6 +158,11 @@ if aba == "📝 Novo Cadastro":
                 c3.info(f"Idade: {f_idade}")
                 if f_nome: filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade]
 
+    st.divider()
+    st.subheader("⛪ Igreja")
+    batizado = st.selectbox("Batizado", ["Sim", "Não"], key=f"bat_{fid}")
+    pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_{fid}")
+    
     st.divider()
     observacoes = st.text_area("Observações", key=f"obs_{fid}")
     documento_file = st.file_uploader("Anexar Documento", type=["pdf", "jpg", "png", "jpeg"], key=f"file_{fid}")
