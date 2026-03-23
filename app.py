@@ -136,12 +136,25 @@ if aba == "📝 Novo Cadastro":
             st.caption("⚠️ :orange[Use apenas os 11 números do CPF.]")
 
     with col2:
-        estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
+        estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)", "Solteiro(a)"], key=f"ec_{fid}")
+        
+        # Inicializamos as variáveis com "Não Aplicável"
         nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
         dt_nasc_conjuge = st.text_input("Data Nascimento Cônjuge", value="Não Aplicável", key=f"dt_conj_{fid}")
         prof_conjuge = st.text_input("Profissão do Cônjuge", value="Não Aplicável", key=f"prof_conj_{fid}")
-        nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
-        nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")  
+        
+        # Se for casado ou união estável, exibimos os campos reais
+        if estado_civil in ["Casado(a)", "União Estável"]:
+            st.subheader("Dados do Cônjuge")
+            nome_conjuge = st.text_input("Nome do Cônjuge")
+            
+            # Aqui usamos o date_input com a mesma formatação do titular
+            data_obj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY")
+            dt_nasc_conjuge = data_obj.strftime("%d/%m/%Y")
+            
+            prof_conjuge = st.text_input("Profissão do Cônjuge")
+            nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
+            nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")  
 
     st.divider()
     st.subheader("👨‍👩‍👧‍👦 Filhos")
