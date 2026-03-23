@@ -12,7 +12,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Gestão Igreja",
-    page_icon="⛪", logo_igreja.jpeg
+    page_icon="logo_igreja.jpeg",
     layout="wide"
 )
 
