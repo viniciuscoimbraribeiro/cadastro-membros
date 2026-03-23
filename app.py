@@ -241,7 +241,16 @@ if aba == "📝 Novo Cadastro":
             if i == 0 or st.checkbox(f"Adicionar Filho(a) {i+1}?", key=f"chk_f{i+1}_{fid}"):
                 c1, c2, c3 = st.columns([2, 1, 1])
                 f_nome = c1.text_input(f"Nome Filho {i+1}", key=f"f{i+1}n_{fid}")
-                f_nasc = c2.date_input(f"Nasc. Filho {i+1} (DD/MM/AAAA)", value=None,format="DD/MM/YYYY", help="DD/MM/AAAA", key=f"f{i+1}d_{fid}")
+                #f_nasc = c2.date_input(f"Nasc. Filho {i+1} (DD/MM/AAAA)", value=None,format="DD/MM/YYYY", help="DD/MM/AAAA", key=f"f{i+1}d_{fid}")
+                f_nasc = c2.date_input(
+                    f"Nasc. Filho {i+1} (DD/MM/AAAA)", 
+                    value=None,
+                    format="DD/MM/YYYY", 
+                    min_value=datetime.date(1900, 1, 1), # Destrava para o passado
+                    max_value=datetime.date.today(),      # Trava no dia de hoje
+                    help="Selecione a data de nascimento", 
+                    key=f"f{i+1}d_{fid}"
+                )
                 f_idade = calcular_idade(f_nasc) if f_nasc else 0
                 c3.info(f"Idade: {f_idade}")
                 if f_nome: filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade]
