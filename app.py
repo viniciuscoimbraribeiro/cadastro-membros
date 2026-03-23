@@ -7,6 +7,9 @@ import re
 import datetime
 from streamlit_gsheets import GSheetsConnection
 import unicodedata
+import datetime
+
+
 
 
 #inicio teste
@@ -150,7 +153,7 @@ if aba == "📝 Novo Cadastro":
     col1, col2 = st.columns(2)
     with col1:
         nome = st.text_input("Nome Completo", key=f"nome_{fid}")
-        nascimento = st.date_input("Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
+        nascimento = ("Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
         endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
     
@@ -187,10 +190,29 @@ if aba == "📝 Novo Cadastro":
         if estado_civil in ["Casado(a)", "União Estável"]:
            
             nome_conjuge = st.text_input("Nome do Cônjuge", key=f"nome_conj_{fid}")
+
+        # 1. Calendário corrigido com limites de data (1900 até hoje)
+            # O value=None faz o campo começar limpo, sem data padrão
+            data_obj_conj = st.date_input(
+                "Data Nascimento Cônjuge", 
+                value=None,
+                min_value=datetime.date(1900, 1, 1),
+                max_value=datetime.date.today(),
+                format="DD/MM/YYYY", 
+                key=f"dt_calend_conj_{fid}"
+            )
+            
+            if data_obj_conj:
+                dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
+            else:
+                dt_nasc_conjuge = ""
+            prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")        
             
             # Calendário para o cônjuge
-            data_obj_conj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY", key=f"dt_calend_conj_{fid}")
-            dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
+            #data_obj_conj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY", key=f"dt_calend_conj_{fid}")
+            #dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")   
+
+            
             
             prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
     
