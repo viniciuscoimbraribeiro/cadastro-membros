@@ -15,7 +15,7 @@ import streamlit as st
 import base64
 
 # Configuração da página
-st.set_page_config(page_title="Gestão Igreja", page_icon="logo_igreja.jpeg", layout="wide")
+st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.jpeg", layout="wide")
 
 # Função para converter imagem para base64 (ajuda o navegador a carregar rápido)
 def get_base64(bin_file):
