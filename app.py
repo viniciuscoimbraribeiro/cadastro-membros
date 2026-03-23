@@ -181,7 +181,8 @@ if aba == "📝 Novo Cadastro":
                 nova_linha = [
                     nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
                     rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
-                    nome_conjuge, dt_nasc_conjuge, prof_conjuge, nome_pai, nome_mae, estado_civil,
+                    nome_conjuge, dt_nasc_conjuge, prof_conjuge,
+                    nome_pai, nome_mae, estado_civil,
                     filhos_dados[0][0], filhos_dados[0][1], filhos_dados[0][2],
                     filhos_dados[1][0], filhos_dados[1][1], filhos_dados[1][2],
                     filhos_dados[2][0], filhos_dados[2][1], filhos_dados[2][2],
@@ -317,7 +318,10 @@ elif aba == "🔍 Consulta de Membros":
                                             st.write(f"💼 **Profissão Cônjuge:** {prof_conjuge}")
                                     else:
                                         st.write("**Cônjuge:** Não Aplicável")
-
+                                        
+                                    st.write(f"**Pai:** {tratar_campo(linha[9])}")
+                                    st.write(f"**Mãe:** {tratar_campo(linha[10])}")
+                                    st.write(f"**Estado Civil:** {tratar_campo(linha[11])}")
                                     
                                     # --- EXIBIÇÃO DOS FILHOS (OCULTA SE VAZIO OU NÃO APLICÁVEL) ---
                                     st.write("**Lista de Filhos:**")
