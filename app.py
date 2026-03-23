@@ -11,25 +11,19 @@ import streamlit.components.v1 as components
 # 1. Configuração da página
 st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.png", layout="wide")
 
-# 2. Injeção via JavaScript (Troque os valores no link abaixo)
-def fix_icon():
-    # DICA: O link deve ser o "Raw" do seu GitHub
-    github_link = "https://github.com/viniciuscoimbraribeiro/cadastro-membros/blob/main/logo_igreja.png?raw=true"
-    
-    components.html(
-        f"""
-        <script>
-            const iconLink = "{github_link}";
-            // Altera o ícone da aba e tenta forçar o mobile
-            parent.document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {{
-                link.href = iconLink;
-            }});
-        </script>
-        """,
-        height=0,
-    )
+# 2. Injeção Direta de Metadados (Substituindo o fix_icon anterior)
+# O link ?raw=true que você achou é perfeito
+icon_url = "https://github.com/viniciuscoimbraribeiro/cadastro-membros/blob/main/logo_igreja.png?raw=true"
 
-fix_icon()
+st.markdown(f"""
+    <head>
+        <link rel="apple-touch-icon" href="{icon_url}">
+        <link rel="icon" type="image/png" href="{icon_url}">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+    </head>
+""", unsafe_allow_html=True)
+
 
 # 1. Função para converter imagem para base64
 def get_base64(bin_file):
