@@ -142,10 +142,10 @@ if aba == "📝 Novo Cadastro":
         prof_conjuge = st.text_input("Profissão do Cônjuge", value="Não Aplicável", key=f"prof_conj_{fid}")
         nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
-        st.divider()
-        st.subheader("👨‍👩‍👧‍👦 Igreja")
-        batizado = st.selectbox("Batizado", ["Sim", "Não"], key=f"bat_{fid}")
-        pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_{fid}")
+    st.divider()
+    st.subheader("⛪ Igreja")
+    batizado = st.selectbox("Batizado", ["Sim", "Não"], key=f"bat_{fid}")
+    pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_{fid}")
         
 
     st.divider()
