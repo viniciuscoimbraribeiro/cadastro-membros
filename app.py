@@ -558,135 +558,99 @@ elif aba == "🛠️ Catálogo de Serviços":
 
 elif aba == "📊 Estatísticas":
     st.header("📊 Painel Estatístico de Membros")
-    st.write("Visão geral da composição da nossa comunidade.")
+    st.write("Análise demográfica e espiritual da congregação.")
 
-    # 1. Carregando os Dados
-    with st.spinner("Atualizando estatísticas..."):
-        #ttl=0 ou TTL baixo para garantir dados frescos no dashboard
+    # 1. Carregamento de Dados com Cache Curto (para ser dinâmico)
+    with st.spinner("Processando indicadores..."):
         df = conn.read(ttl="1s")
 
     if df.empty:
-        st.warning("⚠️ Planilha vazia. Cadastre membros para gerar estatísticas.")
+        st.warning("⚠️ Nenhuns dados encontrados. Cadastre membros para visualizar os gráficos.")
     else:
-        # --- FUNÇÃO DE TRATAMENTO DE IDADE ---
-        # Usada para garantir que temos a idade correta de todos
-        def obter_idade_real(nascimento):
+        # --- TRATAMENTO DE DADOS (Back-end) ---
+        def calcular_idade(nascimento):
             try:
                 if not nascimento or str(nascimento).lower() in ["nan", "none", ""]:
                     return None
                 data_nasc = pd.to_datetime(nascimento, dayfirst=True).date()
                 today = date.today()
-                idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
-                return idade
+                return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
             except:
                 return None
 
-        # Cria uma coluna temporária no DataFrame com a idade real de todos
-        # Coluna 1 é Data Nascimento na sua planilha
-        df['Idade_Real_Estat'] = df.iloc[:, 1].apply(obter_idade_real)
+        # Criamos colunas auxiliares para o cálculo
+        # Coluna 1 = Data de Nascimento
+        # Coluna 21 = Batizado (Sim/Não)
+        df['Idade_Calculada'] = df.iloc[:, 1].apply(calcular_idade)
+        df_valido = df.dropna(subset=['Idade_Calculada'])
 
-        # Remove linhas que não possuem data de nascimento válida (se houver)
-        df_idades = df.dropna(subset=['Idade_Real_Estat'])
-
-
-        # --- GRÁFICO 1: FAIXAS ETÁRIAS (BAR CHART) ---
+        # --- SEÇÃO 1: FAIXA ETÁRIA ---
         st.subheader("👥 Distribuição por Faixa Etária")
-
-        # Define os "Buckets" (Intervalos) e os "Labels" (Rótulos)
-        # O bins[-1] precisa ser um número muito alto para cobrir todos (usei 130)
+        
+        # Definição dos Buckets conforme sua solicitação
         bins = [0, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
         labels = [
-            '👶 0-2 (Bebês)', 
-            '🎈 3-7 (Crianças)', 
-            '🎒 8-13 (Pré-Adole)', 
-            '🎸 14-18 (Adoles)', 
-            '🎓 19-25 (Jovens)',
-            '👩‍💼 26-35 (Adultos J.)', 
-            '🏡 36-45 (Adultos)', 
-            '💼 46-60 (Experientes)', 
-            '👴 61-90 (Sênior)', 
-            '⭐️ > 90 (Mestres)'
+            '👶 0-2 (Bebês)', '🎈 3-7 (Kids)', '🎒 8-13 (Juniores)', 
+            '🎸 14-18 (Adoles)', '🎓 19-25 (Jovens)', '👩‍💼 26-35 (Adultos J.)', 
+            '🏡 36-45 (Adultos)', '💼 46-60 (Maduros)', '👴 61-90 (Sênior)', '⭐️ > 90'
         ]
 
-        # Usa o pandas cut para criar a categorização
-        df_idades['Faixa_Etaria'] = pd.cut(df_idades['Idade_Real_Estat'], bins=bins, labels=labels, right=True)
+        df_valido['Faixa'] = pd.cut(df_valido['Idade_Calculada'], bins=bins, labels=labels, right=True)
+        contagem_idade = df_valido['Faixa'].value_counts().reindex(labels, fill_value=0).reset_index()
+        contagem_idade.columns = ['Faixa Etária', 'Quantidade']
 
-        # Conta quantos membros em cada faixa
-        contagem_faixas = df_idades['Faixa_Etaria'].value_counts().reindex(labels, fill_value=0)
-
-        # Plotando o Gráfico de Barras com Streamlit nativo (Layout moderno)
-        #st.bar_chart(contagem_faixas, x_label="Faixa Etária", y_label="Quantidade de Membros")
-        # Usando Altair via Streamlit para melhor formatação visual
+        # Gráfico de Barras Estilizado (Altair)
         import altair as alt
-
-        data_grafico = contagem_faixas.reset_index()
-        data_grafico.columns = ['Faixa Etária', 'Quantidade']
-
-        chart = alt.Chart(data_grafico).mark_bar(
-            cornerRadiusTopLeft=3,
-            cornerRadiusTopRight=3
+        chart_idade = alt.Chart(contagem_idade).mark_bar(
+            cornerRadiusTopLeft=5,
+            cornerRadiusTopRight=5,
+            color='#5271FF' # Azul padrão profissional
         ).encode(
-            x=alt.X('Faixa Etária', sort=None), # sort=None mantém a ordem dos labels
-            y=alt.Y('Quantidade', title='Membros'),
-            tooltip=['Faixa Etária', 'Quantidade'],
-            color=alt.Color('Faixa Etária', legend=None, scale=alt.Scale(scheme='spectral')) # Esquema de cores bonitão
-        ).properties(
-            height=400
-        )
+            x=alt.X('Faixa Etária', sort=None, axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y('Quantidade', title='Nº de Membros'),
+            tooltip=['Faixa Etária', 'Quantidade']
+        ).properties(height=350)
 
-        st.altair_chart(chart, use_container_width=True)
-
+        st.altair_chart(chart_idade, use_container_width=True)
 
         st.divider()
 
+        # --- SEÇÃO 2: BATISMO (REGRA: APENAS >= 18 ANOS) ---
+        col_meta, col_graph = st.columns([1, 2])
 
-        # --- GRÁFICO 2: BATISMO (PIE/DONUT CHART) ---
-        col1, col2 = st.columns([1, 2]) # Col 1 para resumo texto, Col 2 para gráfico
+        # Filtrando apenas adultos para a estatística de batismo
+        df_adultos = df_valido[df_valido['Idade_Calculada'] >= 18]
+        status_batismo = df_adultos.iloc[:, 21].astype(str).str.strip().value_counts()
+        
+        sim = status_batismo.get("Sim", 0)
+        nao = status_batismo.get("Não", 0)
+        total_adultos = len(df_adultos)
 
-        # Coluna 21 é Batizado na sua planilha (índice começa em 0)
-        df_batismo = df.iloc[:, 21].astype(str).str.strip()
-        contagem_batismo = df_batismo.value_counts()
-
-        sim_bat = contagem_batismo.get("Sim", 0)
-        nao_bat = contagem_batismo.get("Não", 0)
-        total_membros = len(df)
-
-        with col1:
+        with col_meta:
             st.subheader("💧 Batismo")
-            st.metric("Total Membros", total_membros)
-            st.metric("✅ Batizados", sim_bat)
-            st.metric("❌ Não Batizados", nao_bat)
+            st.caption("Apenas membros ≥ 18 anos")
+            st.metric("Total Adultos", total_adultos)
+            st.metric("Batizados", sim, delta=f"{int((sim/total_adultos)*100) if total_adultos > 0 else 0}%", delta_color="normal")
+            st.metric("Não Batizados", nao)
 
-        with col2:
-            import altair as alt
-            
-            # Prepara dados para o gráfico
-            data_bat = pd.DataFrame({
-                'Status': ['Sim', 'Não'],
-                'Qtd': [sim_bat, nao_bat]
-            })
+        with col_graph:
+            if total_adultos > 0:
+                dados_bat = pd.DataFrame({
+                    'Status': ['Batizado', 'Não Batizado'],
+                    'Qtd': [sim, nao]
+                })
+                
+                chart_bat = alt.Chart(dados_bat).mark_arc(innerRadius=65, outerRadius=110).encode(
+                    theta=alt.Theta("Qtd", stack=True),
+                    color=alt.Color("Status", scale=alt.Scale(domain=['Batizado', 'Não Batizado'], range=['#2ecc71', '#e74c3c'])),
+                    tooltip=["Status", "Qtd"]
+                ).properties(title="Proporção de Batismo (Público Adulto)")
+                
+                st.altair_chart(chart_bat, use_container_width=True)
+            else:
+                st.info("Ainda não há adultos cadastrados para gerar o gráfico de batismo.")
 
-            base = alt.Chart(data_bat).encode(
-                theta=alt.Theta("Qtd", stack=True)
-            )
-
-            pie = base.mark_arc(outerRadius=120, innerRadius=60).encode( # innerRadius cria a rosca
-                color=alt.Color("Status", scale=alt.Scale(domain=['Sim', 'Não'], range=['#2ecc71', '#e74c3c'])), # Verde e Vermelho
-                order=alt.Order("Qtd", sort="descending"),
-                tooltip=["Status", "Qtd"]
-            ).properties(
-                title="Proporção de Batizados"
-            )
-
-            # Adiciona o número total no centro da rosca
-            text = base.mark_text(radius=10, fontSize=20, fontWeight='bold').encode(
-                text=alt.Text("sum(Qtd)"),
-                order=alt.Order("Qtd", sort="descending"),
-                color=alt.value("white") # Cor do texto central
-            )
-
-            st.altair_chart(pie, use_container_width=True)
-
-
+        # --- RODAPÉ ---
         st.divider()
-        st.caption(f"Dados atualizados em: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+        atualizacao = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+        st.caption(f"Estatísticas geradas automaticamente em {atualizacao}. Total de registros analisados: {len(df)}")
