@@ -8,6 +8,15 @@ import datetime
 from streamlit_gsheets import GSheetsConnection
 import unicodedata
 
+import streamlit as st
+
+st.set_page_config(
+    page_title="Gestão Igreja",
+    page_icon="⛪", logo_igreja.jpeg
+    layout="wide"
+)
+
+
 
 # Função 1: Para limpar CPF (Mata o .0 e formata com pontos/traço)
 def limpar_e_formatar_cpf(valor):
