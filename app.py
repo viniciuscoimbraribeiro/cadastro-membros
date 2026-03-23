@@ -8,23 +8,50 @@ import datetime
 from streamlit_gsheets import GSheetsConnection
 import unicodedata
 import datetime
+import streamlit.components.v1 as components
 
-
-
-
-#inicio teste
-
-import streamlit as st
-import base64
-
-# Configuração da página
+# 1. Configuração da página
 st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.png", layout="wide")
 
-# Função para converter imagem para base64 (ajuda o navegador a carregar rápido)
+# 2. Injeção via JavaScript (Troque os valores no link abaixo)
+def fix_icon():
+    # DICA: O link deve ser o "Raw" do seu GitHub
+    github_link = "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPO/main/logo_igreja.png"
+    
+    components.html(
+        f"""
+        <script>
+            const iconLink = "{github_link}";
+            // Altera o ícone da aba e tenta forçar o mobile
+            parent.document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(link => {{
+                link.href = iconLink;
+            }});
+        </script>
+        """,
+        height=0,
+    )
+
+fix_icon()
+
+# 3. Injeção via Metadados HTML (Base64)
 def get_base64(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except:
+        return None
+
+img_64 = get_base64("logo_igreja.png")
+
+if img_64:
+    st.markdown(
+        f"""
+        <link rel="apple-touch-icon" href="data:image/png;base64,{img_64}">
+        <link rel="icon" sizes="192x192" href="data:image/png;base64,{img_64}">
+        """,
+        unsafe_allow_html=True
+    )
 
 # Injetando o ícone nos metadados do navegador
 try:
@@ -40,10 +67,6 @@ try:
     )
 except:
     pass # Se a imagem não for encontrada, ele não quebra o app
-
-
-#fim teste
-
 
 
 
