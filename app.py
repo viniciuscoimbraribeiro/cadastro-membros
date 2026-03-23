@@ -286,15 +286,34 @@ elif aba == "🔍 Consulta de Membros":
                                 
                                 with c2:
                                     st.markdown("### 👨‍👩‍👧 Família")
-                                    # Cônjuge com tratamento para vazio
-                                    conjuge = linha[6] if str(linha[6]).strip() and str(linha[6]) != "nan" else "Não Aplicável"
-                                    st.write(f"**Cônjuge:** {conjuge}")
-    
-                                    # Função rápida para tratar campos vazios ou 'nan' (comum em planilhas)
+                                    
+                                   # Função rápida para tratar campos vazios ou 'nan' (comum em planilhas)
                                     def tratar_campo(valor):
                                         if not valor or str(valor).lower() in ["nan", "none", ""]:
                                             return "Não Aplicável"
                                         return valor
+                                    
+                                    # Cônjuge com tratamento para vazio
+                                    #conjuge = linha[6] if str(linha[6]).strip() and str(linha[6]) != "nan" else "Não Aplicável"
+                                    #st.write(f"**Cônjuge:** {conjuge}")
+    
+                                    conjuge = tratar_campo(linha[6])
+                                    if conjuge != "Não Aplicável":
+                                        st.write(f"**Cônjuge:** {conjuge}")
+                                        
+                                        # Novos campos nas colunas 7 e 8
+                                        dt_nasc_conjuge = tratar_campo(linha[7])
+                                        prof_conjuge = tratar_campo(linha[8])
+                                        
+                                        if dt_nasc_conjuge != "Não Aplicável":
+                                            st.write(f"🎂 **Nascimento Cônjuge:** {dt_nasc_conjuge}")
+                                        
+                                        if prof_conjuge != "Não Aplicável":
+                                            st.write(f"💼 **Profissão Cônjuge:** {prof_conjuge}")
+                                    else:
+                                        st.write("**Cônjuge:** Não Aplicável")
+
+                                    
                                     #novo
                                     dt_nasc_conjuge = tratar_campo(linha[7])
                                             prof_conjuge = tratar_campo(linha[8])
@@ -307,6 +326,8 @@ elif aba == "🔍 Consulta de Membros":
                                             st.write("**Cônjuge:** Não Aplicável")
 
 
+
+                                    
                                     
                                     # --- EXIBIÇÃO DOS FILHOS (OCULTA SE VAZIO OU NÃO APLICÁVEL) ---
                                     st.write("**Lista de Filhos:**")
