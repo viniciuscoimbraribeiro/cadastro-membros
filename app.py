@@ -103,11 +103,11 @@ with st.sidebar:
 if aba == "📝 Novo Cadastro":
     # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
-    with col_l2:
-        try:
-            st.image("logo_igreja.jpeg", use_container_width=True)
-        except:
-            st.warning("Logo não encontrado.")
+    #with col_l2:
+     #   try:
+     #       st.image("logo_igreja.jpeg", use_container_width=True)
+     #   except:
+     #       st.warning("Logo não encontrado.")
 
     st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
     
