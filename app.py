@@ -15,7 +15,8 @@ st.set_page_config(
     page_icon="logo_igreja.jpeg",
     layout="wide"
 )
-
+st.sidebar.image("logo_igreja.jpeg", use_container_width=True)
+st.sidebar.divider()
 
 
 # Função 1: Para limpar CPF (Mata o .0 e formata com pontos/traço)
