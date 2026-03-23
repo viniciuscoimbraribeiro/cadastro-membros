@@ -14,7 +14,7 @@ st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.png", layou
 # 2. Injeção via JavaScript (Troque os valores no link abaixo)
 def fix_icon():
     # DICA: O link deve ser o "Raw" do seu GitHub
-    github_link = "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPO/main/logo_igreja.png"
+    github_link = "https://github.com/viniciuscoimbraribeiro/cadastro-membros/blob/main/logo_igreja.png?raw=true"
     
     components.html(
         f"""
