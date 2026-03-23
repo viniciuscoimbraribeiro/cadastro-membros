@@ -15,7 +15,7 @@ import streamlit as st
 import base64
 
 # Configuração da página
-st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.jpeg", layout="wide")
+st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.png", layout="wide")
 
 # Função para converter imagem para base64 (ajuda o navegador a carregar rápido)
 def get_base64(bin_file):
@@ -25,7 +25,7 @@ def get_base64(bin_file):
 
 # Injetando o ícone nos metadados do navegador
 try:
-    img_base64 = get_base64("logo_igreja.jpeg")
+    img_base64 = get_base64("logo_igreja.png")
     st.markdown(
         f"""
         <style>
@@ -45,7 +45,7 @@ except:
 
 
 
-st.sidebar.image("logo_igreja.jpeg", use_container_width=True)
+st.sidebar.image("logo_igreja.png", use_container_width=True)
 st.sidebar.divider()
 
 
@@ -135,7 +135,7 @@ if aba == "📝 Novo Cadastro":
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
     #with col_l2:
      #   try:
-     #       st.image("logo_igreja.jpeg", use_container_width=True)
+     #       st.image("logo_igreja.png", use_container_width=True)
      #   except:
      #       st.warning("Logo não encontrado.")
 
