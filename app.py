@@ -289,9 +289,6 @@ elif aba == "🔍 Consulta de Membros":
                                     # Cônjuge com tratamento para vazio
                                     conjuge = linha[6] if str(linha[6]).strip() and str(linha[6]) != "nan" else "Não Aplicável"
                                     st.write(f"**Cônjuge:** {conjuge}")
-                                
-                                    #st.divider() # Pequena linha para separar cônjuge de filhos
-                                    st.write("**Lista de Filhos:**")
     
                                     # Função rápida para tratar campos vazios ou 'nan' (comum em planilhas)
                                     def tratar_campo(valor):
