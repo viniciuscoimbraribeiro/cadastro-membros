@@ -136,26 +136,34 @@ if aba == "📝 Novo Cadastro":
             st.caption("⚠️ :orange[Use apenas os 11 números do CPF.]")
 
     with col2:
-        estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)", "Solteiro(a)"], key=f"ec_{fid}")
+        estado_civil = st.selectbox("Estado Civil", ["Solteiro(a)", "Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
         
-        # Inicializamos as variáveis com "Não Aplicável"
-        nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
-        dt_nasc_conjuge = st.text_input("Data Nascimento Cônjuge", value="Não Aplicável", key=f"dt_conj_{fid}")
-        prof_conjuge = st.text_input("Profissão do Cônjuge", value="Não Aplicável", key=f"prof_conj_{fid}")
-        
-        # Se for casado ou união estável, exibimos os campos reais
+        # 1. Inicializamos as variáveis padrão (caso não entre no IF)
+        nome_conjuge = "Não Aplicável"
+        dt_nasc_conjuge = "Não Aplicável"
+        prof_conjuge = "Não Aplicável"
+    
+        # 2. Se for casado ou união estável, EXIBE os campos para preenchimento
         if estado_civil in ["Casado(a)", "União Estável"]:
+            st.markdown("---") # Uma linha divisória para organizar
             st.subheader("Dados do Cônjuge")
-            nome_conjuge = st.text_input("Nome do Cônjuge")
             
-            # Aqui usamos o date_input com a mesma formatação do titular
-            data_obj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY")
-            dt_nasc_conjuge = data_obj.strftime("%d/%m/%Y")
+            nome_conjuge = st.text_input("Nome do Cônjuge", key=f"nome_conj_{fid}")
             
-            prof_conjuge = st.text_input("Profissão do Cônjuge")
-            nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
-            nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")  
+            # Calendário para o cônjuge
+            data_obj_conj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY", key=f"dt_calend_conj_{fid}")
+            dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
+            
+            prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
+            st.markdown("---")
+    
+        # 3. Campos que SEMPRE aparecem (Pai e Mãe) - Fora do IF
+        nome_pai = st.text_input("Nome do Pai", key=f"pai_{fid}")
+        nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
 
+
+
+    
     st.divider()
     st.subheader("👨‍👩‍👧‍👦 Filhos")
     tem_filhos = st.checkbox("Tem filhos?", key=f"has_kids_{fid}")
