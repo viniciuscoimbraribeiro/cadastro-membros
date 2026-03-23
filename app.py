@@ -137,6 +137,8 @@ if aba == "📝 Novo Cadastro":
 
     with col2:
         nome_conjuge = st.text_input("Nome do Cônjuge", value="Não Aplicável", key=f"conj_{fid}")
+        dt_nasc_conjuge = st.text_input("Data Nascimento Cônjuge", value="Não Aplicável", key=f"dt_conj_{fid}")
+        prof_conjuge = st.text_input("Profissão do Cônjuge", value="Não Aplicável", key=f"prof_conj_{fid}")
         nome_pai = st.text_input("Nome do Pai", value="Não Aplicável", key=f"pai_{fid}")
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
         estado_civil = st.selectbox("Estado Civil", ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
@@ -176,7 +178,7 @@ if aba == "📝 Novo Cadastro":
                 nova_linha = [
                     nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
                     rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
-                    nome_conjuge, nome_pai, nome_mae, estado_civil,
+                    nome_conjuge, dt_nasc_conjuge, prof_conjuge, nome_pai, nome_mae, estado_civil,
                     filhos_dados[0][0], filhos_dados[0][1], filhos_dados[0][2],
                     filhos_dados[1][0], filhos_dados[1][1], filhos_dados[1][2],
                     filhos_dados[2][0], filhos_dados[2][1], filhos_dados[2][2],
