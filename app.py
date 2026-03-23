@@ -346,11 +346,11 @@ elif aba == "🔍 Consulta de Membros":
                                         st.caption("Nenhum filho registrado.")
                                 with c3:
                                     st.markdown("### ⛪ Igreja")
-                                    st.write(f"**Batizado:** {linha[19]}") # Era Pastor, agora é Batizado
-                                    st.write(f"**Pastor:** {linha[20]}")   # Era Obs, agora é Pastor
-                                    st.info(f"**Obs:** {linha[21]}")       # Era link, agora é Obs
-                                if len(linha) > 22 and "http" in str(linha[22]):
-                                    st.link_button("📂 Visualizar Documento", linha[22], use_container_width=True)
+                                    st.write(f"**Batizado:** {linha[21]}") # Era Pastor, agora é Batizado
+                                    st.write(f"**Pastor:** {linha[22]}")   # Era Obs, agora é Pastor
+                                    st.info(f"**Obs:** {linha[23]}")       # Era link, agora é Obs
+                                if len(linha) > 24 and "http" in str(linha[24]):
+                                    st.link_button("📂 Visualizar Documento", linha[24], use_container_width=True)
     
                                 st.divider()
                                 col_pri, col_ed, col_ex = st.columns(3)
