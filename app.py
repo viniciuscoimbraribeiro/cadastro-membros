@@ -314,21 +314,6 @@ elif aba == "🔍 Consulta de Membros":
                                         st.write("**Cônjuge:** Não Aplicável")
 
                                     
-                                    #novo
-                                    dt_nasc_conjuge = tratar_campo(linha[7])
-                                            prof_conjuge = tratar_campo(linha[8])
-                                            
-                                            if dt_nasc_conjuge != "Não Aplicável":
-                                                st.write(f"🎂 **Nascimento Cônjuge:** {dt_nasc_conjuge}")
-                                            if prof_conjuge != "Não Aplicável":
-                                                st.write(f"💼 **Profissão Cônjuge:** {prof_conjuge}")
-                                        else:
-                                            st.write("**Cônjuge:** Não Aplicável")
-
-
-
-                                    
-                                    
                                     # --- EXIBIÇÃO DOS FILHOS (OCULTA SE VAZIO OU NÃO APLICÁVEL) ---
                                     st.write("**Lista de Filhos:**")
                                     
