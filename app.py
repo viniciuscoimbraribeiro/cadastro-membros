@@ -215,15 +215,13 @@ if aba == "📝 Novo Cadastro":
                 dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
             else:
                 dt_nasc_conjuge = ""
-            prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")        
+            # Adicionei "_volat" ou qualquer termo para diferenciar de outros campos
+            prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_extra_{fid}")     
             
             # Calendário para o cônjuge
             #data_obj_conj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY", key=f"dt_calend_conj_{fid}")
-            #dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")   
-
-            
-            
-            prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
+            #dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
+            #prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
     
         # 3. Campos que SEMPRE aparecem (Pai e Mãe) - Fora do IF
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
