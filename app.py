@@ -67,7 +67,7 @@ def limpar_rg(valor):
     return re.sub(r'\D', '', str(valor).split('.')[0])
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Cadastro de Membros", page_icon="⛪")
+st.set_page_config(page_title="IBPS Sumaré", page_icon="⛪")
 
 # Conexão da planilha via Secrets (Mantida para os dados)
 conn = st.connection("gsheets", type=GSheetsConnection)
