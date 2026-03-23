@@ -153,7 +153,16 @@ if aba == "📝 Novo Cadastro":
     col1, col2 = st.columns(2)
     with col1:
         nome = st.text_input("Nome Completo", key=f"nome_{fid}")
-        nascimento = ("Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}")     
+        #nascimento = ("Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}") 
+        # Faltou o st.date_input antes do parênteses!
+        nascimento = st.date_input(
+            "Data de Nascimento (DD/MM/AAAA)", 
+            value=None, 
+            format="DD/MM/YYYY", 
+            min_value=datetime.date(1920, 1, 1), 
+            max_value=datetime.date.today(),
+            key=f"nasc_{fid}"
+        )        
         endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
     
