@@ -145,9 +145,7 @@ if aba == "📝 Novo Cadastro":
     
         # 2. Se for casado ou união estável, EXIBE os campos para preenchimento
         if estado_civil in ["Casado(a)", "União Estável"]:
-            st.markdown("---") # Uma linha divisória para organizar
-            st.subheader("Dados do Cônjuge")
-            
+           
             nome_conjuge = st.text_input("Nome do Cônjuge", key=f"nome_conj_{fid}")
             
             # Calendário para o cônjuge
@@ -155,7 +153,6 @@ if aba == "📝 Novo Cadastro":
             dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
             
             prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
-            st.markdown("---")
     
         # 3. Campos que SEMPRE aparecem (Pai e Mãe) - Fora do IF
         nome_pai = st.text_input("Nome do Pai", key=f"pai_{fid}")
