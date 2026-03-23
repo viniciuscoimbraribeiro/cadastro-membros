@@ -1,13 +1,11 @@
 import streamlit as st
 import pandas as pd
-from datetime import date
 import requests
 import base64
 import re
 import datetime
 from streamlit_gsheets import GSheetsConnection
 import unicodedata
-import datetime
 import streamlit.components.v1 as components
 
 # 1. Configuração da página
@@ -33,7 +31,7 @@ def fix_icon():
 
 fix_icon()
 
-# 3. Injeção via Metadados HTML (Base64)
+# 1. Função para converter imagem para base64
 def get_base64(bin_file):
     try:
         with open(bin_file, 'rb') as f:
@@ -41,9 +39,10 @@ def get_base64(bin_file):
         return base64.b64encode(data).decode()
     except:
         return None
-
+# 2. Executa a conversão
 img_64 = get_base64("logo_igreja.png")
 
+# 3. Injeta uma única vez o HTML
 if img_64:
     st.markdown(
         f"""
@@ -52,21 +51,6 @@ if img_64:
         """,
         unsafe_allow_html=True
     )
-
-# Injetando o ícone nos metadados do navegador
-try:
-    img_base64 = get_base64("logo_igreja.png")
-    st.markdown(
-        f"""
-        <style>
-        </style>
-        <link rel="apple-touch-icon" href="data:image/jpeg;base64,{img_base64}">
-        <link rel="icon" sizes="192x192" href="data:image/jpeg;base64,{img_base64}">
-        """,
-        unsafe_allow_html=True
-    )
-except:
-    pass # Se a imagem não for encontrada, ele não quebra o app
 
 
 
