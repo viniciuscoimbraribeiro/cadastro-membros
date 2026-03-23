@@ -8,13 +8,7 @@ import datetime
 from streamlit_gsheets import GSheetsConnection
 import unicodedata
 
-import streamlit as st
 
-st.set_page_config(
-    page_title="Gestão Igreja",
-    page_icon="logo_igreja.jpeg",
-    layout="wide"
-)
 st.sidebar.image("logo_igreja.jpeg", use_container_width=True)
 st.sidebar.divider()
 
