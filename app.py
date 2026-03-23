@@ -9,6 +9,42 @@ from streamlit_gsheets import GSheetsConnection
 import unicodedata
 
 
+#inicio teste
+
+import streamlit as st
+import base64
+
+# Configuração da página
+st.set_page_config(page_title="Gestão Igreja", page_icon="logo_igreja.jpeg", layout="wide")
+
+# Função para converter imagem para base64 (ajuda o navegador a carregar rápido)
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# Injetando o ícone nos metadados do navegador
+try:
+    img_base64 = get_base64("logo_igreja.jpeg")
+    st.markdown(
+        f"""
+        <style>
+        </style>
+        <link rel="apple-touch-icon" href="data:image/jpeg;base64,{img_base64}">
+        <link rel="icon" sizes="192x192" href="data:image/jpeg;base64,{img_base64}">
+        """,
+        unsafe_allow_html=True
+    )
+except:
+    pass # Se a imagem não for encontrada, ele não quebra o app
+
+
+#fim teste
+
+
+
+
+
 st.sidebar.image("logo_igreja.jpeg", use_container_width=True)
 st.sidebar.divider()
 
