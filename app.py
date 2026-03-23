@@ -155,8 +155,9 @@ if aba == "📝 Novo Cadastro":
             prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
     
         # 3. Campos que SEMPRE aparecem (Pai e Mãe) - Fora do IF
-        nome_pai = st.text_input("Nome do Pai", key=f"pai_{fid}")
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
+        nome_pai = st.text_input("Nome do Pai", key=f"pai_{fid}")
+
 
 
 
