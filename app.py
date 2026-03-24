@@ -644,13 +644,14 @@ elif aba == "📊 Estatísticas":
         df = conn.read(ttl="1s")
 
     if df.empty:
-        st.warning("⚠️ Nenhum dado encontrado. Cadastre membros para visualizar os gráficos.")
+        st.warning("⚠️ Nenhum dado encontrado na planilha.")
     else:
-        # --- FUNÇÃO AUXILIAR ---
-        def calcular_idade(nascimento):
+        # --- FUNÇÃO DE CÁLCULO DE IDADE ---
+        def calcular_idade_estat(nascimento):
             try:
-                if not nascimento or str(nascimento).lower() in ["nan", "none", "", "null"]:
+                if not nascimento or str(nascimento).lower() in ["nan", "none", "", "não aplicável"]:
                     return None
+                # Tenta converter a data vinda da planilha (que é string)
                 dt = pd.to_datetime(nascimento, dayfirst=True, errors='coerce')
                 if pd.isnat(dt): return None
                 data_nasc = dt.date()
@@ -659,32 +660,33 @@ elif aba == "📊 Estatísticas":
             except:
                 return None
 
-        # --- CONSOLIDAÇÃO DE TODOS OS INDIVÍDUOS (Membros + Família) ---
+        # --- CONSOLIDAÇÃO DOS DADOS (BASEADO NO SEU MAPEAMENTO) ---
         todos_individuos = []
 
         for _, row in df.iterrows():
-            # 1. Dados do Membro Principal (Colunas 1 e 21)
-            id_m = calcular_idade(row.iloc[1])
+            # 1. Membro Principal (Nasc: Col 1 | Batismo: Col 22)
+            id_m = calcular_idade_estat(row.iloc[1])
             if id_m is not None:
                 todos_individuos.append({
                     'Idade': id_m, 
-                    'Batizado': str(row.iloc[21]).strip().capitalize()
+                    'Batizado': str(row.iloc[22]).strip().capitalize()
                 })
 
-            # 2. Dados do Cônjuge (Colunas 10 e 11)
-            id_c = calcular_idade(row.iloc[10])
+            # 2. Cônjuge (Nasc: Col 8 | Batismo: Não tem coluna específica, usa a do membro ou "Sim" se preenchido)
+            id_c = calcular_idade_estat(row.iloc[8])
             if id_c is not None:
+                # Como não há coluna de batismo separada para cônjuge na sua lista, 
+                # vamos assumir "Sim" se ele estiver cadastrado, ou você pode ajustar o índice.
                 todos_individuos.append({
                     'Idade': id_c, 
-                    'Batizado': str(row.iloc[11]).strip().capitalize()
+                    'Batizado': "Sim" 
                 })
 
-            # 3. Dados dos Filhos (Colunas 13, 16 e 19 - Nascimento)
-            # Para filhos, assumimos "Não Batizado" se forem menores ou buscamos na lógica
+            # 3. Filhos (Nascimento: Colunas 13, 16 e 19)
             for col_idx in [13, 16, 19]:
-                id_f = calcular_idade(row.iloc[col_idx])
+                id_f = calcular_idade_estat(row.iloc[col_idx])
                 if id_f is not None:
-                    # Se houver coluna de batismo para filho, troque o "Não" pelo índice dela
+                    # Filhos entram como "Não Batizado" por padrão na estatística
                     todos_individuos.append({
                         'Idade': id_f, 
                         'Batizado': "Não" 
@@ -694,7 +696,7 @@ elif aba == "📊 Estatísticas":
         df_total = pd.DataFrame(todos_individuos)
 
         if df_total.empty:
-            st.info("Nenhum dado válido de idade encontrado nas colunas processadas.")
+            st.error("❌ Nenhum dado de idade pôde ser calculado. Verifique o formato das datas na planilha.")
         else:
             # --- SEÇÃO 1: FAIXA ETÁRIA ---
             st.subheader("👥 Distribuição por Faixa Etária")
