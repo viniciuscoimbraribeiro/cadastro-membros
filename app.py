@@ -649,14 +649,29 @@ elif aba == "📊 Estatísticas":
         # --- FUNÇÃO DE CÁLCULO DE IDADE ---
         def calcular_idade_estat(nascimento):
             try:
-                if not nascimento or str(nascimento).lower() in ["nan", "none", "", "não aplicável"]:
+                # 1. Limpeza inicial de strings
+                nasc_str = str(nascimento).strip().lower()
+                if nasc_str in ["nan", "none", "", "não aplicável", "null", "n/a"]:
                     return None
-                # Converte para data (dayfirst=True para formato brasileiro)
+                
+                # 2. Tenta converter usando pandas (muito potente para detectar formatos)
+                # dayfirst=True é crucial para o padrão brasileiro
                 dt = pd.to_datetime(nascimento, dayfirst=True, errors='coerce')
-                if pd.isnat(dt): return None
+                
+                if pd.isnat(dt): 
+                    return None
+                
                 data_nasc = dt.date()
                 today = datetime.date.today()
-                return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
+                
+                # 3. Cálculo real da idade
+                idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
+                
+                # Validação de sanidade (evita datas no futuro ou idades impossíveis)
+                if idade < 0 or idade > 120:
+                    return None
+                    
+                return idade
             except:
                 return None
 
@@ -677,22 +692,19 @@ elif aba == "📊 Estatísticas":
             if id_m is not None:
                 todos_individuos.append({
                     'Idade': id_m, 
-                    'Batizado': str(row[col_batismo]).strip().capitalize() if col_batismo in df.columns else "Não"
+                    'Batizado': str(row.get(col_batismo, "Não")).strip().capitalize()
                 })
 
-            # 2. Cônjuge
-            if col_nasc_conj in df.columns:
-                id_c = calcular_idade_estat(row[col_nasc_conj])
-                if id_c is not None:
-                    # Como não há coluna de batismo para cônjuge, assumimos "Sim" por ser adulto casado na igreja
-                    todos_individuos.append({'Idade': id_c, 'Batizado': "Sim"})
+            # Cônjuge
+            id_c = calcular_idade_estat(row.get(col_nasc_conj))
+            if id_c is not None:
+                todos_individuos.append({'Idade': id_c, 'Batizado': "Sim"})
 
-            # 3. Filhos
+            # Filhos
             for col_f in [col_nasc_f1, col_nasc_f2, col_nasc_f3]:
-                if col_f in df.columns:
-                    id_f = calcular_idade_estat(row[col_f])
-                    if id_f is not None:
-                        todos_individuos.append({'Idade': id_f, 'Batizado': "Não"})
+                id_f = calcular_idade_estat(row.get(col_f))
+                if id_f is not None:
+                    todos_individuos.append({'Idade': id_f, 'Batizado': "Não"})
 
         # Criar DataFrame Consolidado
         df_total = pd.DataFrame(todos_individuos)
