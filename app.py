@@ -637,139 +637,112 @@ elif aba == "🛠️ Catálogo de Serviços":
 
 elif aba == "📊 Estatísticas":
     st.header("📊 Painel Estatístico de Membros")
-    st.write("Análise demográfica e espiritual consolidada (Membros, Cônjuges e Filhos).")
+    st.write("Análise demográfica e espiritual consolidada.")
 
-    # 1. Carregamento de Dados
-    with st.spinner("Processando indicadores..."):
+    with st.spinner("Lendo dados da planilha..."):
         df = conn.read(ttl="1s")
 
     if df.empty:
-        st.warning("⚠️ Nenhum dado encontrado na planilha.")
+        st.warning("⚠️ Planilha vazia ou não acessível.")
     else:
-        # --- FUNÇÃO DE CÁLCULO DE IDADE ---
-        def calcular_idade_estat(nascimento):
+        def calcular_idade_final(valor):
+            if pd.isna(valor) or str(valor).strip() == "" or str(valor).lower() in ["não aplicável", "none", "nan", "0"]:
+                return None
             try:
-                # 1. Limpeza inicial de strings
-                nasc_str = str(nascimento).strip().lower()
-                if nasc_str in ["nan", "none", "", "não aplicável", "null", "n/a"]:
-                    return None
+                # Tenta converter forçando o padrão brasileiro DD/MM/AAAA
+                dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
                 
-                # 2. Tenta converter usando pandas (muito potente para detectar formatos)
-                # dayfirst=True é crucial para o padrão brasileiro
-                dt = pd.to_datetime(nascimento, dayfirst=True, errors='coerce')
+                # Se falhar (NaT), tenta uma conversão genérica (pode ser objeto do GSheets)
+                if pd.isnat(dt):
+                    dt = pd.to_datetime(valor, errors='coerce')
                 
                 if pd.isnat(dt): 
                     return None
                 
-                data_nasc = dt.date()
                 today = datetime.date.today()
-                
-                # 3. Cálculo real da idade
+                data_nasc = dt.date()
                 idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
                 
-                # Validação de sanidade (evita datas no futuro ou idades impossíveis)
-                if idade < 0 or idade > 120:
-                    return None
-                    
-                return idade
+                # Filtro de sanidade: idade entre 0 e 110 anos
+                return idade if 0 <= idade <= 110 else None
             except:
                 return None
 
-        # --- CONSOLIDAÇÃO USANDO OS NOMES EXATOS QUE VOCÊ ME PASSOU ---
-        todos_individuos = []
+        # Nomes exatos conforme seu LOG anterior
+        c_membro = "Data Nascimento"
+        c_batismo = "Batizado"
+        c_conjuge = "Data Nascimento Cônjuge"
+        c_filhos = ["Data Nascimento do Filho (a) - 1", "Data Nascimento do Filho (a) - 2", "Data Nascimento do Filho (a) - 3"]
 
-        # Mapeamento IDÊNTICO à sua lista de colunas
-        col_nasc_membro = "Data Nascimento"      # Nome exato da sua posição 1
-        col_batismo = "Batizado"                 # Nome exato da sua posição 21
-        col_nasc_conj = "Data Nascimento Cônjuge" # Nome exato da sua posição 7
-        col_nasc_f1 = "Data Nascimento do Filho (a) - 1" # Posição 13
-        col_nasc_f2 = "Data Nascimento do Filho (a) - 2" # Posição 16
-        col_nasc_f3 = "Data Nascimento do Filho (a) - 3" # Posição 19
+        lista_geral = []
 
         for _, row in df.iterrows():
             # 1. Membro Principal
-            id_m = calcular_idade_estat(row[col_nasc_membro])
-            if id_m is not None:
-                todos_individuos.append({
-                    'Idade': id_m, 
-                    'Batizado': str(row.get(col_batismo, "Não")).strip().capitalize()
-                })
+            if c_membro in row:
+                idade_m = calcular_idade_final(row[c_membro])
+                if idade_m is not None:
+                    # Pega batismo (coluna 21)
+                    bat_txt = str(row[c_batismo]).strip().capitalize() if c_batismo in row else "Não"
+                    lista_geral.append({'Idade': idade_m, 'Batizado': bat_txt})
 
-            # Cônjuge
-            id_c = calcular_idade_estat(row.get(col_nasc_conj))
-            if id_c is not None:
-                todos_individuos.append({'Idade': id_c, 'Batizado': "Sim"})
+            # 2. Cônjuge
+            if c_conjuge in row:
+                idade_c = calcular_idade_final(row[c_conjuge])
+                if idade_c is not None:
+                    lista_geral.append({'Idade': idade_c, 'Batizado': "Sim"}) # Assumido Sim p/ adultos
 
-            # Filhos
-            for col_f in [col_nasc_f1, col_nasc_f2, col_nasc_f3]:
-                id_f = calcular_idade_estat(row.get(col_f))
-                if id_f is not None:
-                    todos_individuos.append({'Idade': id_f, 'Batizado': "Não"})
+            # 3. Filhos
+            for cf in c_filhos:
+                if cf in row:
+                    idade_f = calcular_idade_final(row[cf])
+                    if idade_f is not None:
+                        lista_geral.append({'Idade': idade_f, 'Batizado': "Não"})
 
-        # Criar DataFrame Consolidado
-        df_total = pd.DataFrame(todos_individuos)
+        df_total = pd.DataFrame(lista_geral)
 
         if df_total.empty:
-            st.error("❌ O sistema ainda não conseguiu processar as datas. Verifique se as datas na planilha estão no formato DD/MM/AAAA.")
+            st.error("❌ Erro de Processamento: Nenhuma data válida encontrada.")
+            st.info("💡 Dica: Verifique se a coluna 'Data Nascimento' no Google Sheets está formatada como 'Data'.")
+            # Debug para você ver o que está vindo na primeira linha
+            with st.expander("Visualizar amostra de dados brutos"):
+                st.write(df[[c_membro]].head())
         else:
-            # --- SEÇÃO 1: FAIXA ETÁRIA ---
+            # --- DASHBOARD ---
             st.subheader("👥 Distribuição por Faixa Etária")
-            
             bins = [0, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
-            labels = [
-                '👶 0-2 (Bebês)', '🎈 3-7 (Kids)', '🎒 8-13 (Juniores)', 
-                '🎸 14-18 (Adoles)', '🎓 19-25 (Jovens)', '👩‍💼 26-35 (Adultos J.)', 
-                '🏡 36-45 (Adultos)', '💼 46-60 (Maduros)', '👴 61-90 (Sênior)', '⭐️ > 90'
-            ]
-
+            labels = ['0-2', '3-7', '8-13', '14-18', '19-25', '26-35', '36-45', '46-60', '61-90', '> 90']
+            
             df_total['Faixa'] = pd.cut(df_total['Idade'], bins=bins, labels=labels, right=True)
-            contagem_idade = df_total['Faixa'].value_counts().reindex(labels, fill_value=0).reset_index()
-            contagem_idade.columns = ['Faixa Etária', 'Quantidade']
+            contagem = df_total['Faixa'].value_counts().reindex(labels, fill_value=0).reset_index()
+            contagem.columns = ['Faixa', 'Quantidade']
 
             import altair as alt
-            chart_idade = alt.Chart(contagem_idade).mark_bar(
-                cornerRadiusTopLeft=5, cornerRadiusTopRight=5, color='#5271FF'
-            ).encode(
-                x=alt.X('Faixa Etária', sort=None, axis=alt.Axis(labelAngle=-45)),
-                y=alt.Y('Quantidade', title='Nº de Pessoas'),
-                tooltip=['Faixa Etária', 'Quantidade']
-            ).properties(height=350)
+            chart = alt.Chart(contagem).mark_bar(color='#5271FF', cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
+                x=alt.X('Faixa', sort=None, title="Faixa Etária"),
+                y=alt.Y('Quantidade', title="Nº de Pessoas"),
+                tooltip=['Faixa', 'Quantidade']
+            ).properties(height=300)
+            st.altair_chart(chart, use_container_width=True)
 
-            st.altair_chart(chart_idade, use_container_width=True)
-
+            # --- SEÇÃO BATISMO ---
             st.divider()
-
-            # --- SEÇÃO 2: BATISMO (REGRA: APENAS >= 18 ANOS) ---
             df_adultos = df_total[df_total['Idade'] >= 18].copy()
             
             if not df_adultos.empty:
-                col_meta, col_graph = st.columns([1, 2])
-                status_batismo = df_adultos['Batizado'].value_counts()
-                sim = status_batismo.get("Sim", 0)
-                nao = status_batismo.get("Não", 0)
-                total_adultos = len(df_adultos)
-
-                with col_meta:
-                    st.subheader("💧 Batismo")
-                    st.caption("Público ≥ 18 anos")
-                    st.metric("Total Adultos", total_adultos)
-                    pct_sim = int((sim/total_adultos)*100) if total_adultos > 0 else 0
-                    st.metric("Batizados", sim, delta=f"{pct_sim}%", delta_color="normal")
+                c1, c2 = st.columns([1, 2])
+                sim = (df_adultos['Batizado'] == "Sim").sum()
+                nao = (df_adultos['Batizado'] == "Não").sum()
+                
+                with c1:
+                    st.metric("Adultos", len(df_adultos))
+                    st.metric("Batizados", sim)
                     st.metric("Não Batizados", nao)
-
-                with col_graph:
-                    dados_bat = pd.DataFrame({
-                        'Status': ['Batizado', 'Não Batizado'],
-                        'Qtd': [sim, nao]
-                    })
-                    chart_bat = alt.Chart(dados_bat).mark_arc(innerRadius=65, outerRadius=110).encode(
-                        theta=alt.Theta("Qtd", stack=True),
-                        color=alt.Color("Status", scale=alt.Scale(domain=['Batizado', 'Não Batizado'], range=['#2ecc71', '#e74c3c'])),
-                        tooltip=["Status", "Qtd"]
-                    ).properties(title="Proporção de Batismo (Adultos)")
-                    st.altair_chart(chart_bat, use_container_width=True)
-            else:
-                st.info("Ainda não há adultos cadastrados para gerar estatísticas de batismo.")
-
-            st.divider()
-            st.caption(f"Total de indivíduos analisados (Membros+Família): {len(df_total)}")
+                with c2:
+                    dados_bat = pd.DataFrame({'Status': ['Batizados', 'Não Batizados'], 'Qtd': [sim, nao]})
+                    pie = alt.Chart(dados_bat).mark_arc(innerRadius=60).encode(
+                        theta="Qtd", 
+                        color=alt.Color("Status", scale=alt.Scale(range=['#2ecc71', '#e74c3c']))
+                    ).properties(title="Status de Batismo (Adultos)")
+                    st.altair_chart(pie, use_container_width=True)
+            
+            st.caption(f"Análise baseada em {len(df_total)} indivíduos (Membros e dependentes).")
