@@ -637,7 +637,7 @@ elif aba == "🛠️ Catálogo de Serviços":
 
 elif aba == "📊 Estatísticas":
     st.header("📊 Painel Estatístico de Membros")
-    st.write("Análise consolidada de Membros, Cônjuges e Filhos.")
+    st.write("Análise demográfica consolidada.")
 
     with st.spinner("Lendo dados da planilha..."):
         df = conn.read(ttl="1s")
@@ -649,102 +649,85 @@ elif aba == "📊 Estatísticas":
             if pd.isna(valor) or str(valor).strip() == "" or str(valor).lower() in ["não aplicável", "none", "nan"]:
                 return None
             try:
-                # Tenta converter forçando o padrão brasileiro
+                # Tenta converter de forma flexível
                 dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
-                if pd.isnat(dt): 
-                    return None
+                if pd.isnat(dt): return None
                 
                 today = datetime.date.today()
                 data_nasc = dt.date()
-                
-                # Cálculo da idade
                 idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
-                
-                # Aceita de 0 a 110 anos
-                if 0 <= idade <= 110:
-                    return idade
-                return None
+                return idade if 0 <= idade <= 110 else None
             except:
                 return None
 
-        # Nomes das colunas sincronizados com seu log
-        c_membro = "Data Nascimento"
-        c_batismo = "Batizado"
-        c_conjuge = "Data Nascimento Cônjuge"
-        c_f1 = "Data Nascimento do Filho (a) - 1"
-        c_f2 = "Data Nascimento do Filho (a) - 2"
-        c_f3 = "Data Nascimento do Filho (a) - 3"
+        # --- BUSCA AUTOMÁTICA DE COLUNAS (À prova de erros de digitação) ---
+        # Procuramos as colunas pelos termos que elas contêm
+        col_membro = next((c for c in df.columns if "Data Nascimento" in c and "Filho" not in c and "Cônjuge" not in c), None)
+        col_conjuge = next((c for c in df.columns if "Data Nascimento Cônjuge" in c), None)
+        cols_filhos = [c for c in df.columns if "Data Nascimento do Filho" in c]
+        col_batismo = next((c for c in df.columns if "Batizado" in c), None)
 
         lista_geral = []
 
         for _, row in df.iterrows():
             # 1. Membro
-            id_m = calcular_idade_final(row.get(c_membro))
-            if id_m is not None:
-                bat_txt = str(row.get(c_batismo, "Não")).strip().capitalize()
-                lista_geral.append({'Idade': id_m, 'Batizado': bat_txt, 'Tipo': 'Membro'})
+            if col_membro:
+                id_m = calcular_idade_final(row[col_membro])
+                if id_m is not None:
+                    bat_txt = str(row[col_batismo]).strip().capitalize() if col_batismo else "Não"
+                    lista_geral.append({'Idade': id_m, 'Batizado': bat_txt})
 
             # 2. Cônjuge
-            id_c = calcular_idade_final(row.get(c_conjuge))
-            if id_c is not None:
-                lista_geral.append({'Idade': id_c, 'Batizado': "Sim", 'Tipo': 'Cônjuge'})
+            if col_conjuge:
+                id_c = calcular_idade_final(row[col_conjuge])
+                if id_c is not None:
+                    lista_geral.append({'Idade': id_c, 'Batizado': "Sim"})
 
             # 3. Filhos
-            for cf in [c_f1, c_f2, c_f3]:
-                id_f = calcular_idade_final(row.get(cf))
+            for cf in cols_filhos:
+                id_f = calcular_idade_final(row[cf])
                 if id_f is not None:
-                    lista_geral.append({'Idade': id_f, 'Batizado': "Não", 'Tipo': 'Filho'})
+                    lista_geral.append({'Idade': id_f, 'Batizado': "Não"})
 
         df_total = pd.DataFrame(lista_geral)
 
         if df_total.empty:
-            st.error("❌ Nenhuma idade válida calculada.")
-            st.info("💡 Dica: Mude as datas na planilha para anos anteriores (ex: 1990, 2005) para testar os gráficos.")
+            st.error("❌ O sistema encontrou as colunas, mas não conseguiu processar os valores.")
+            st.info("💡 Tente o seguinte: No Google Sheets, selecione as colunas de data e vá em 'Formatar' -> 'Número' -> 'Texto Simples'. Às vezes o formato de data do Google gera conflito.")
+            # Debug visual para você
+            st.write("Colunas identificadas:", [col_membro, col_conjuge] + cols_filhos)
         else:
-            # --- GRÁFICO DE FAIXA ETÁRIA ---
-            st.subheader("👥 Distribuição por Faixa Etária")
+            # --- GRÁFICOS ---
+            st.success(f"✅ {len(df_total)} indivíduos processados com sucesso!")
             
-            # Bins ajustados para pegar desde o zero
+            st.subheader("👥 Distribuição por Faixa Etária")
             bins = [-1, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
             labels = ['0-2', '3-7', '8-13', '14-18', '19-25', '26-35', '36-45', '46-60', '61-90', '> 90']
             
             df_total['Faixa'] = pd.cut(df_total['Idade'], bins=bins, labels=labels)
             contagem = df_total['Faixa'].value_counts().reindex(labels, fill_value=0).reset_index()
-            contagem.columns = ['Faixa', 'Quantidade']
+            contagem.columns = ['Faixa', 'Qtd']
 
             import altair as alt
-            chart = alt.Chart(contagem).mark_bar(color='#5271FF', cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
-                x=alt.X('Faixa', sort=None, title="Faixa Etária"),
-                y=alt.Y('Quantidade', title="Nº de Pessoas"),
-                tooltip=['Faixa', 'Quantidade']
+            chart = alt.Chart(contagem).mark_bar(color='#5271FF').encode(
+                x=alt.X('Faixa', sort=None), y='Qtd', tooltip=['Faixa', 'Qtd']
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
 
-            # --- SEÇÃO BATISMO (SÓ PARA ADULTOS >= 18) ---
-            df_adultos = df_total[df_total['Idade'] >= 18].copy()
-            
+            # Batismo para maiores de 18
+            df_adultos = df_total[df_total['Idade'] >= 18]
             if not df_adultos.empty:
                 st.divider()
-                col1, col2 = st.columns([1, 2])
+                st.subheader("💧 Status de Batismo (Adultos)")
                 sim = (df_adultos['Batizado'] == "Sim").sum()
                 nao = (df_adultos['Batizado'] == "Não").sum()
                 
-                with col1:
-                    st.subheader("💧 Batismo")
-                    st.metric("Total Adultos", len(df_adultos))
-                    st.metric("Batizados", sim)
-                    st.metric("Não Batizados", nao)
+                c1, c2 = st.columns([1, 2])
+                c1.metric("Total Adultos", len(df_adultos))
+                c1.metric("Batizados", sim)
                 
-                with col2:
-                    dados_bat = pd.DataFrame({'Status': ['Sim', 'Não'], 'Qtd': [sim, nao]})
-                    pie = alt.Chart(dados_bat).mark_arc(innerRadius=60).encode(
-                        theta="Qtd",
-                        color=alt.Color("Status", scale=alt.Scale(range=['#2ecc71', '#e74c3c'])),
-                        tooltip=['Status', 'Qtd']
-                    ).properties(title="Status de Batismo (Público Adulto)")
-                    st.altair_chart(pie, use_container_width=True)
-            else:
-                st.info("💡 Gráfico de Batismo: Será exibido assim que houver pessoas com 18 anos ou mais.")
-
-            st.divider()
-            st.caption(f"Análise baseada em {len(df_total)} registros encontrados.")
+                dados_bat = pd.DataFrame({'Status': ['Sim', 'Não'], 'Qtd': [sim, nao]})
+                pie = alt.Chart(dados_bat).mark_arc(innerRadius=60).encode(
+                    theta="Qtd", color=alt.Color("Status", scale=alt.Scale(range=['#2ecc71', '#e74c3c']))
+                )
+                c2.altair_chart(pie, use_container_width=True)
