@@ -693,24 +693,8 @@ elif aba == "📊 Estatísticas":
         if df.empty:
             st.warning("⚠️ Nenhum dado encontrado. Cadastre membros para visualizar os gráficos.")
         else:
-          
-            total_cadastros = len(df) # Total de linhas na planilha (Membros principais)
-            total_geral = len(df_total) # Total de indivíduos (Membro + Cônjuge + Filhos)
-            
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.metric("Total de Membros", f"{total_cadastros} 👤")
-            with c2:
-                st.metric("Total Geral (Família)", f"{total_geral} 👨‍👩‍👧‍👦")
-            with c3:
-                agora = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
-                st.caption(f"📅 Dados atualizados em:\n{agora}")
-
-            st.divider()
-   
-            
-            
-            # --- MOTOR DE CÁLCULO MANUAL (Inquebrável) ---
+ 
+            # --- MOTOR DE CÁLCULO MANUAL---
             def calcular_idade_manual(nascimento):
                 try:
                     s = str(nascimento).strip()
@@ -727,12 +711,8 @@ elif aba == "📊 Estatísticas":
 
             c_membro_nasc = "Data Nascimento"
             c_membro_bat = "Batizado" # Coluna C
-            
             c_conjuge_nasc = "Data Nascimento Cônjuge"
-            c_conjuge_bat = "Batizado Cônjuge" # Coluna K (Confirme se este é o nome no cabeçalho do Sheets)
-            
-            # Mapeamento dos 3 filhos (Colunas O-R, S-V, W-Z)
-            # Vamos usar os nomes das colunas de Nascimento e as colunas de Batismo (R, V, Z)
+            c_conjuge_bat = "Batizado Cônjuge"
             colunas_filhos = [
                 {"nasc": "Data Nascimento do Filho (a) - 1", "bat": "Batizado Filho 1"},
                 {"nasc": "Data Nascimento do Filho (a) - 2", "bat": "Batizado Filho 2"},
@@ -774,10 +754,28 @@ elif aba == "📊 Estatísticas":
 
             df_total = pd.DataFrame(lista_geral)
 
+            if not df_total.empty:
+                # Agora que o df_total existe, podemos mostrar os números no topo
+                total_membros = len(df) # Total de linhas (cadastros realizados)
+                total_pessoas = len(df_total) # Total de indivíduos processados
+                
+                # Criando as colunas de destaque
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.metric("Total de Cadastros", f"{total_membros} 📝")
+                with m2:
+                    st.metric("Total de Pessoas", f"{total_pessoas} 👥")
+                with m3:
+                    agora = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+                    st.caption(f"**Última Atualização:**\n{agora}")
+                
+                st.divider()
+
+
             if df_total.empty:
                 st.error("❌ Erro ao processar dados. Verifique os cabeçalhos da planilha.")
             else:
-                # --- GRÁFICO 1: FAIXA ETÁRIA (Mantido conforme solicitado) ---
+
                 st.subheader("👥 Distribuição por Faixa Etária")
                 bins = [-1, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
                 labels = [
