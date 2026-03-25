@@ -646,48 +646,59 @@ elif aba == "📊 Estatísticas":
         st.warning("⚠️ Planilha vazia ou não acessível.")
     else:
         def calcular_idade_final(valor):
-            if pd.isna(valor) or str(valor).strip() == "" or str(valor).lower() in ["não aplicável", "none", "nan"]:
-                return None
-            try:
-                # Tenta converter de forma flexível
-                dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
-                if pd.isnat(dt): return None
-                
-                today = datetime.date.today()
-                data_nasc = dt.date()
-                idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
-                return idade if 0 <= idade <= 110 else None
-            except:
-                return None
+                    if pd.isna(valor) or str(valor).strip() == "" or str(valor).lower() in ["não aplicável", "none", "nan"]:
+                        return None
+                    try:
+                        # 1. Trata se o Google Sheets enviou um número serial (comum em planilhas)
+                        if isinstance(valor, (int, float)):
+                            # Converte serial do Excel para datetime
+                            dt = pd.to_datetime(valor, unit='d', origin='1899-12-30')
+                        else:
+                            # 2. Tenta converter string (forçando padrão BR)
+                            dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
+                        
+                        if pd.isnat(dt): 
+                            return None
+                        
+                        today = datetime.date.today()
+                        data_nasc = dt.date()
+                        idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
+                        return idade if 0 <= idade <= 110 else None
+                    except:
+                        return None
 
-        # --- BUSCA AUTOMÁTICA DE COLUNAS (À prova de erros de digitação) ---
-        # Procuramos as colunas pelos termos que elas contêm
-        col_membro = next((c for c in df.columns if "Data Nascimento" in c and "Filho" not in c and "Cônjuge" not in c), None)
-        col_conjuge = next((c for c in df.columns if "Data Nascimento Cônjuge" in c), None)
-        cols_filhos = [c for c in df.columns if "Data Nascimento do Filho" in c]
-        col_batismo = next((c for c in df.columns if "Batizado" in c), None)
+        # --- BUSCA DE COLUNAS ---
+        col_membro = next((c for c in df.columns if "Data Nascimento" in str(c) and "Filho" not in str(c) and "Cônjuge" not in str(c)), None)
+        col_conjuge = next((c for c in df.columns if "Data Nascimento Cônjuge" in str(c)), None)
+        cols_filhos = [c for c in df.columns if "Data Nascimento do Filho" in str(c)]
+        col_batismo = next((c for c in df.columns if "Batizado" in str(c)), None)
 
         lista_geral = []
 
-        for _, row in df.iterrows():
+        # Usamos itertuples() que costuma ser mais performático e preciso com tipos de dados
+        for row in df.itertuples(index=False):
+            # Transformamos a linha em dicionário para facilitar o acesso pelo nome da coluna
+            row_dict = row._asdict()
+            
             # 1. Membro
-            if col_membro:
-                id_m = calcular_idade_final(row[col_membro])
+            if col_membro and col_membro in row_dict:
+                id_m = calcular_idade_final(row_dict[col_membro])
                 if id_m is not None:
-                    bat_txt = str(row[col_batismo]).strip().capitalize() if col_batismo else "Não"
+                    bat_txt = str(row_dict.get(col_batismo, "Não")).strip().capitalize()
                     lista_geral.append({'Idade': id_m, 'Batizado': bat_txt})
 
             # 2. Cônjuge
-            if col_conjuge:
-                id_c = calcular_idade_final(row[col_conjuge])
+            if col_conjuge and col_conjuge in row_dict:
+                id_c = calcular_idade_final(row_dict[col_conjuge])
                 if id_c is not None:
                     lista_geral.append({'Idade': id_c, 'Batizado': "Sim"})
 
             # 3. Filhos
             for cf in cols_filhos:
-                id_f = calcular_idade_final(row[cf])
-                if id_f is not None:
-                    lista_geral.append({'Idade': id_f, 'Batizado': "Não"})
+                if cf in row_dict:
+                    id_f = calcular_idade_final(row_dict[cf])
+                    if id_f is not None:
+                        lista_geral.append({'Idade': id_f, 'Batizado': "Não"})
 
         df_total = pd.DataFrame(lista_geral)
 
