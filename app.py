@@ -283,7 +283,7 @@ if aba == "📝 Novo Cadastro":
                     st.caption(f"ℹ️ {nome_f} é menor de idade ({idade_f} anos). Batismo não registrado.")
 
     # 4. Pastor Responsável
-    pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_igreja_{fid}")
+    pastor = st.selectbox("Pastor Responsável", ["Selecione...", "Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_igreja_{fid}")
     
     
     st.divider()
