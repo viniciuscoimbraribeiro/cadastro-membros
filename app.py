@@ -828,4 +828,3 @@ elif aba == "📊 Estatísticas":
                 
                 # --- RODAPÉ ---
                 st.divider()
-                st.caption(f"Estatísticas geradas em {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}. Total analisado: {len(df_total)} indivíduos.")
