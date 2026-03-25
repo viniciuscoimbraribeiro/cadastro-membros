@@ -250,11 +250,11 @@ if aba == "📝 Novo Cadastro":
     st.subheader("⛪ Igreja")
     
     # 1. Batismo do Membro Principal
-    bat_membro = st.selectbox("Membro é Batizado?", ["Sim", "Não"], key=f"bat_mem_principal_{fid}")
+    bat_membro = st.selectbox("Membro é Batizado?", ["Selecione...", "Sim", "Não"], key=f"bat_mem_principal_{fid}")
     
     # 2. Batismo do Cônjuge (Depende do Estado Civil selecionado lá em cima)
     if estado_civil in ["Casado(a)", "União Estável"]:
-        bat_conjuge = st.selectbox(f"O Cônjuge ({nome_conjuge}) é Batizado?", ["Sim", "Não"], key=f"bat_conj_igreja_{fid}")
+        bat_conjuge = st.selectbox(f"O Cônjuge ({nome_conjuge}) é Batizado?", ["Selecione...", "Sim", "Não"], key=f"bat_conj_igreja_{fid}")
     else:
         bat_conjuge = "Não Aplicável"
 
@@ -267,7 +267,7 @@ if aba == "📝 Novo Cadastro":
             
             if nome_f != "Não Aplicável" and nome_f != "":
                 if idade_f >= 18:
-                    f_bat_input = st.selectbox(f"Filho(a) {i+1} ({nome_f}) é Batizado?", ["Sim", "Não"], key=f"bat_f{i+1}_igreja_{fid}")
+                    f_bat_input = st.selectbox(f"Filho(a) {i+1} ({nome_f}) é Batizado?", ["Selecione...", "Sim", "Não"], key=f"bat_f{i+1}_igreja_{fid}")
                     # Atualiza a lista de dados dos filhos com a resposta
                     filhos_dados[i][3] = f_bat_input
                 else:
