@@ -693,6 +693,23 @@ elif aba == "📊 Estatísticas":
         if df.empty:
             st.warning("⚠️ Nenhum dado encontrado. Cadastre membros para visualizar os gráficos.")
         else:
+          
+            total_cadastros = len(df) # Total de linhas na planilha (Membros principais)
+            total_geral = len(df_total) # Total de indivíduos (Membro + Cônjuge + Filhos)
+            
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("Total de Membros", f"{total_cadastros} 👤")
+            with c2:
+                st.metric("Total Geral (Família)", f"{total_geral} 👨‍👩‍👧‍👦")
+            with c3:
+                agora = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+                st.caption(f"📅 Dados atualizados em:\n{agora}")
+
+            st.divider()
+   
+            
+            
             # --- MOTOR DE CÁLCULO MANUAL (Inquebrável) ---
             def calcular_idade_manual(nascimento):
                 try:
@@ -708,8 +725,6 @@ elif aba == "📊 Estatísticas":
                 except:
                     return None
 
-            # --- PROCESSAMENTO DOS NOVOS CAMPOS DE BATISMO ---
-            # Mapeamento exato das colunas da sua planilha (Ajuste se o nome no Sheets for ligeiramente diferente)
             c_membro_nasc = "Data Nascimento"
             c_membro_bat = "Batizado" # Coluna C
             
