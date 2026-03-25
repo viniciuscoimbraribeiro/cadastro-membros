@@ -645,18 +645,24 @@ elif aba == "📊 Estatísticas":
         st.warning("⚠️ Planilha vazia.")
     else:
         def calcular_idade_debug(valor):
-            # 1. Tratamento de Nulos/Vazios
-            val_limpo = str(valor).strip()
-            if not valor or val_limpo.lower() in ["nan", "none", "", "não aplicável", "0"]:
+            import re
+            if pd.isna(valor):
+                return None
+                
+            # 1. Transforma em string e limpa TUDO que não for número ou barra
+            # Isso remove espaços invisíveis, pontos, ou caracteres estranhos
+            val_limpo = re.sub(r'[^0-9/]', '', str(valor))
+            
+            if not val_limpo or len(val_limpo) < 8: # Mínimo para DD/MM/AA
                 return None
             
             try:
-                # 2. Tenta converter (dayfirst=True para padrão BR)
-                dt = pd.to_datetime(val_limpo, dayfirst=True, errors='coerce')
+                # 2. Tenta converter o que sobrou (que deve ser apenas números e barras)
+                dt = pd.to_datetime(val_limpo, format='%d/%m/%Y', errors='coerce')
                 
                 if pd.isnat(dt):
-                    # Segunda tentativa: Tenta formato ISO caso o Sheets mande AAAA-MM-DD
-                    dt = pd.to_datetime(val_limpo, errors='coerce')
+                    # Segunda tentativa: Caso esteja sem as barras (só números)
+                    dt = pd.to_datetime(val_limpo, format='%d%m%Y', errors='coerce')
                 
                 if pd.isnat(dt):
                     return None
