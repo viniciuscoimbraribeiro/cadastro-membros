@@ -763,7 +763,7 @@ elif aba == "📊 Estatísticas":
                 st.error("❌ Erro ao processar dados. Verifique os cabeçalhos da planilha.")
             else:
                 # --- GRÁFICO 1: FAIXA ETÁRIA (Mantido conforme solicitado) ---
-                st.subheader("👥 Distribuição por Faixa Etária")
+                st.subheader("👥 Distribuição por Faixa Etária") st.caption(f"Estatísticas geradas em {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}. Total analisado: {len(df_total)} indivíduos.")
                 bins = [-1, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
                 labels = [
                     '👶 0-2 (Bebês)', '🎈 3-7 (Kids)', '🎒 8-13 (Juniores)', 
