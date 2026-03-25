@@ -256,10 +256,43 @@ if aba == "📝 Novo Cadastro":
                 c3.info(f"Idade: {f_idade}")
                 if f_nome: filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade]
 
+
+
+
+# --- SEÇÃO IGREJA (Centralizada) ---
     st.divider()
     st.subheader("⛪ Igreja")
-    batizado = st.selectbox("Batizado", ["Sim", "Não"], key=f"bat_{fid}")
-    pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_{fid}")
+    
+    # 1. Batismo do Membro Principal
+    bat_membro = st.selectbox("Membro é Batizado?", ["Sim", "Não"], key=f"bat_mem_principal_{fid}")
+    
+    # 2. Batismo do Cônjuge (Depende do Estado Civil selecionado lá em cima)
+    if estado_civil in ["Casado(a)", "União Estável"]:
+        bat_conjuge = st.selectbox(f"O Cônjuge ({nome_conjuge}) é Batizado?", ["Sim", "Não"], key=f"bat_conj_igreja_{fid}")
+    else:
+        bat_conjuge = "Não Aplicável"
+
+    # 3. Batismo dos Filhos (Depende se 'tem_filhos' e se idade >= 18)
+    if tem_filhos:
+        for i in range(3):
+            # Só processamos se o nome do filho foi preenchido na seção anterior
+            nome_f = filhos_dados[i][0]
+            idade_f = filhos_dados[i][2]
+            
+            if nome_f != "Não Aplicável" and nome_f != "":
+                if idade_f >= 18:
+                    # Cria um campo de batismo para cada filho adulto
+                    f_bat_input = st.selectbox(f"Filho(a) {i+1} ({nome_f}) é Batizado?", ["Sim", "Não"], key=f"bat_f{i+1}_igreja_{fid}")
+                    # Atualiza a lista de dados dos filhos com a resposta
+                    filhos_dados[i][3] = f_bat_input
+                else:
+                    # Se for menor, já definimos como "Não Aplicável" ou "Não" automaticamente
+                    filhos_dados[i][3] = "Não Aplicável"
+                    st.caption(f"ℹ️ {nome_f} é menor de idade ({idade_f} anos). Batismo não registrado.")
+
+    # 4. Pastor Responsável
+    pastor = st.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], key=f"past_igreja_{fid}")
+    
     
     st.divider()
     observacoes = st.text_area("Observações", key=f"obs_{fid}")
@@ -275,15 +308,37 @@ if aba == "📝 Novo Cadastro":
                     with st.spinner("Enviando documento..."):
                         link_final = upload_document_github(nome, documento_file)
 
+                # MONTAGEM DA LINHA - CONFERIR COM COLUNAS DO SHEETS
                 nova_linha = [
-                    nome, nascimento.strftime("%d/%m/%Y"), endereco, profissao,
-                    rg_txt or "Não Aplicável", cpf_txt or "Não Aplicável",
-                    nome_conjuge, dt_nasc_conjuge, prof_conjuge,
-                    nome_pai, nome_mae, estado_civil,
-                    filhos_dados[0][0], filhos_dados[0][1], filhos_dados[0][2],
-                    filhos_dados[1][0], filhos_dados[1][1], filhos_dados[1][2],
-                    filhos_dados[2][0], filhos_dados[2][1], filhos_dados[2][2],
-                    batizado, pastor, observacoes or "Não Aplicável", link_final
+                    nome,                             # Col A
+                    nascimento.strftime("%d/%m/%Y"),  # Col B
+                    bat_membro,                       # Col C (NOVA POSIÇÃO)
+                    endereco,                         # Col D
+                    profissao,                        # Col E
+                    rg_txt or "Não Aplicável",        # Col F
+                    cpf_txt or "Não Aplicável",       # Col G
+                    nome_conjuge,                     # Col H
+                    dt_nasc_conjuge,                  # Col I
+                    prof_conjuge,                     # Col J
+                    bat_conjuge,                      # Col K (NOVA COLUNA)
+                    nome_pai,                         # Col L
+                    nome_mae,                         # Col M
+                    estado_civil,                     # Col N
+                    filhos_dados[0][0],               # Col O (Nome F1)
+                    filhos_dados[0][1],               # Col P (Nasc F1)
+                    filhos_dados[0][2],               # Col Q (Idade F1)
+                    filhos_dados[0][3],               # Col R (Batismo F1 - NOVA)
+                    filhos_dados[1][0],               # Col S (Nome F2)
+                    filhos_dados[1][1],               # Col T (Nasc F2)
+                    filhos_dados[1][2],               # Col U (Idade F2)
+                    filhos_dados[1][3],               # Col V (Batismo F2 - NOVA)
+                    filhos_dados[2][0],               # Col W (Nome F3)
+                    filhos_dados[2][1],               # Col X (Nasc F3)
+                    filhos_dados[2][2],               # Col Y (Idade F3)
+                    filhos_dados[2][3],               # Col Z (Batismo F3 - NOVA)
+                    pastor,                           # Col AA
+                    observacoes or "Não Aplicável",   # Col AB
+                    link_final                        # Col AC
                 ]
 
                 salvar_na_planilha(nova_linha)
