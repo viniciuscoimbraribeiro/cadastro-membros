@@ -644,105 +644,92 @@ elif aba == "📊 Estatísticas":
     if df.empty:
         st.warning("⚠️ Planilha vazia.")
     else:
-        def calcular_idade_debug(valor):
-            import re
-            if pd.isna(valor):
-                return None
-                
-            # 1. Transforma em string e limpa TUDO que não for número ou barra
-            # Isso remove espaços invisíveis, pontos, ou caracteres estranhos
-            val_limpo = re.sub(r'[^0-9/]', '', str(valor))
-            
-            if not val_limpo or len(val_limpo) < 8: # Mínimo para DD/MM/AA
-                return None
-            
+        # 1. FUNÇÃO DE IDADE ULTRA-SIMPLIFICADA (Para evitar qualquer erro de conversão)
+        def calcular_idade_manual(nascimento):
             try:
-                # 2. Tenta converter o que sobrou (que deve ser apenas números e barras)
-                dt = pd.to_datetime(val_limpo, format='%d/%m/%Y', errors='coerce')
-                
-                if pd.isnat(dt):
-                    # Segunda tentativa: Caso esteja sem as barras (só números)
-                    dt = pd.to_datetime(val_limpo, format='%d%m%Y', errors='coerce')
-                
-                if pd.isnat(dt):
+                s = str(nascimento).strip()
+                if not s or s.lower() in ["nan", "none", "", "não aplicável"]:
                     return None
                 
-                today = datetime.date.today()
-                data_nasc = dt.date()
-                idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
-                return idade if 0 <= idade <= 110 else None
+                # Tenta quebrar a string manualmente se o to_datetime falhar
+                # Espera DD/MM/AAAA
+                partes = s.split('/')
+                if len(partes) == 3:
+                    d, m, a = int(partes[0]), int(partes[1]), int(partes[2])
+                    today = datetime.date.today()
+                    idade = today.year - a - ((today.month, today.day) < (m, d))
+                    return idade if 0 <= idade <= 110 else None
+                
+                # Se não tiver barras, tenta o conversor padrão do Pandas como última chance
+                dt = pd.to_datetime(s, dayfirst=True, errors='coerce')
+                if not pd.isnat(dt):
+                    today = datetime.date.today()
+                    return today.year - dt.year - ((today.month, today.day) < (dt.month, dt.day))
+                
+                return None
             except:
                 return None
 
-        # --- MAPEAMENTO ---
-        col_membro = next((c for c in df.columns if "Data Nascimento" in str(c) and "Filho" not in str(c) and "Cônjuge" not in str(c)), None)
-        col_conjuge = next((c for c in df.columns if "Data Nascimento Cônjuge" in str(c)), None)
-        cols_filhos = [c for c in df.columns if "Data Nascimento do Filho" in str(c)]
-        col_batismo = next((c for c in df.columns if "Batizado" in str(c)), None)
-
+        # 2. MAPEAMENTO DE COLUNAS POR ÍNDICE (Para não errar o nome nunca)
+        # Baseado no seu log anterior: 1:Nascimento, 7:Conjuge, 13,16,19:Filhos, 21:Batizado
         lista_geral = []
 
-        # Processamento
-        for index, row in df.iterrows():
-            # Membro
-            if col_membro:
-                id_m = calcular_idade_debug(row[col_membro])
-                if id_m is not None:
-                    bat = str(row[col_batismo]).strip().capitalize() if col_batismo else "Não"
-                    lista_geral.append({'Idade': id_m, 'Batizado': bat})
+        # Convertendo para lista de dicionários para garantir a iteração
+        dados = df.to_dict('records')
 
-            # Cônjuge
-            if col_conjuge:
-                id_c = calcular_idade_debug(row[col_conjuge])
-                if id_c is not None:
-                    lista_geral.append({'Idade': id_c, 'Batizado': "Sim"})
+        for row in dados:
+            # Membro (Coluna "Data Nascimento")
+            m_nasc = row.get("Data Nascimento")
+            m_idade = calcular_idade_manual(m_nasc)
+            if m_idade is not None:
+                bat = str(row.get("Batizado", "Não")).strip().capitalize()
+                lista_geral.append({'Idade': m_idade, 'Batizado': bat})
+
+            # Cônjuge (Coluna "Data Nascimento Cônjuge")
+            c_nasc = row.get("Data Nascimento Cônjuge")
+            c_idade = calcular_idade_manual(c_nasc)
+            if c_idade is not None:
+                lista_geral.append({'Idade': c_idade, 'Batizado': "Sim"})
 
             # Filhos
-            for cf in cols_filhos:
-                id_f = calcular_idade_debug(row[cf])
-                if id_f is not None:
-                    lista_geral.append({'Idade': id_f, 'Batizado': "Não"})
+            for col_f in ["Data Nascimento do Filho (a) - 1", "Data Nascimento do Filho (a) - 2", "Data Nascimento do Filho (a) - 3"]:
+                f_nasc = row.get(col_f)
+                f_idade = calcular_idade_manual(f_nasc)
+                if f_idade is not None:
+                    lista_geral.append({'Idade': f_idade, 'Batizado': "Não"})
 
         df_total = pd.DataFrame(lista_geral)
 
         if df_total.empty:
-            st.error("❌ Falha no processamento dos dados.")
-            
-            # --- SEÇÃO DE DEBUG ---
-            with st.expander("🔍 Investigação Técnica (Por que falhou?)"):
-                if col_membro:
-                    amostra = df[col_membro].dropna().iloc[0] if not df[col_membro].dropna().empty else "Coluna Vazia"
-                    st.write(f"**Nome da Coluna:** {col_membro}")
-                    st.write(f"**Exemplo de dado bruto:** `{amostra}`")
-                    st.write(f"**Tipo do dado:** `{type(amostra)}`")
-                else:
-                    st.write("Coluna 'Data Nascimento' não encontrada.")
+            st.error("❌ O processador manual também não conseguiu ler as datas.")
+            with st.expander("Verificar estrutura interna dos dados"):
+                st.write("Total de linhas lidas:", len(df))
+                st.write("Primeira linha de dados bruta:", dados[0] if dados else "Vazio")
         else:
-            # --- GRÁFICOS (Se houver sucesso) ---
-            st.success(f"✅ {len(df_total)} pessoas analisadas!")
+            st.success(f"✅ {len(df_total)} registros processados!")
             
-            st.subheader("👥 Distribuição por Faixa Etária")
+            # --- GRÁFICO ---
             bins = [-1, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
             labels = ['0-2', '3-7', '8-13', '14-18', '19-25', '26-35', '36-45', '46-60', '61-90', '> 90']
-            
             df_total['Faixa'] = pd.cut(df_total['Idade'], bins=bins, labels=labels)
+            
             contagem = df_total['Faixa'].value_counts().reindex(labels, fill_value=0).reset_index()
             contagem.columns = ['Faixa', 'Qtd']
 
             import altair as alt
             chart = alt.Chart(contagem).mark_bar(color='#5271FF').encode(
-                x=alt.X('Faixa', sort=None), y='Qtd', tooltip=['Faixa', 'Qtd']
+                x=alt.X('Faixa', sort=None), y='Qtd'
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
             
-            # Batismo (Adultos)
-            df_adultos = df_total[df_total['Idade'] >= 18]
-            if not df_adultos.empty:
+            # Batismo
+            df_ad = df_total[df_total['Idade'] >= 18]
+            if not df_ad.empty:
                 st.divider()
-                sim = (df_adultos['Batizado'] == "Sim").sum()
-                nao = (df_adultos['Batizado'] == "Não").sum()
+                sim = (df_ad['Batizado'] == "Sim").sum()
+                nao = (df_ad['Batizado'] == "Não").sum()
                 c1, c2 = st.columns([1, 2])
-                c1.metric("Adultos", len(df_adultos))
+                c1.metric("Adultos", len(df_ad))
                 c1.metric("Batizados", sim)
                 
                 pie = alt.Chart(pd.DataFrame({'S':['Sim','Não'],'Q':[sim,nao]})).mark_arc(innerRadius=50).encode(
