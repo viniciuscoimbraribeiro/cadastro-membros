@@ -84,9 +84,15 @@ def salvar_na_planilha(dados_nova_linha):
     df_final = pd.concat([df_atual, df_novo_registro], ignore_index=True)
     conn.update(data=df_final)
 
+#def calcular_idade(data_nasc):
+#    if not data_nasc: return 0
+#    today = date.today()
+#    return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
+
 def calcular_idade(data_nasc):
     if not data_nasc: return 0
-    today = date.today()
+    # Usamos datetime.date.today() para evitar o erro de NameError
+    today = datetime.date.today()
     return today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
 
 def upload_document_github(member_name, file):
