@@ -137,11 +137,7 @@ with st.sidebar:
 if aba == "📝 Novo Cadastro":
     # O logo e o título ficam aqui dentro para aparecerem SÓ nesta aba
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1]) 
-    #with col_l2:
-     #   try:
-     #       st.image("logo_igreja.png", use_container_width=True)
-     #   except:
-     #       st.warning("Logo não encontrado.")
+
 
     st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
     
@@ -154,15 +150,8 @@ if aba == "📝 Novo Cadastro":
     col1, col2 = st.columns(2)
     with col1:
         nome = st.text_input("Nome Completo", key=f"nome_{fid}")
-        #nascimento = ("Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=date(1920, 1, 1), key=f"nasc_{fid}") 
-        # Faltou o st.date_input antes do parênteses!
         nascimento = st.date_input(
-            "Data de Nascimento (DD/MM/AAAA)", 
-            value=None, 
-            format="DD/MM/YYYY", 
-            min_value=datetime.date(1920, 1, 1), 
-            max_value=datetime.date.today(),
-            key=f"nasc_{fid}"
+            "Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=datetime.date(1920, 1, 1), max_value=datetime.date.today(), key=f"nasc_{fid}"
         )        
         endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
@@ -190,18 +179,14 @@ if aba == "📝 Novo Cadastro":
 
     with col2:
         estado_civil = st.selectbox("Estado Civil", ["Solteiro(a)", "Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"], key=f"ec_{fid}")
-        
-        # 1. Inicializamos as variáveis padrão (caso não entre no IF)
         nome_conjuge = "Não Aplicável"
         dt_nasc_conjuge = "Não Aplicável"
         prof_conjuge = "Não Aplicável"
-    
-        # 2. Se for casado ou união estável, EXIBE os campos para preenchimento
         if estado_civil in ["Casado(a)", "União Estável"]:
            
             nome_conjuge = st.text_input("Nome do Cônjuge", key=f"nome_conj_{fid}")
 
-        # 1. Calendário corrigido com limites de data (1900 até hoje)
+            # 1. Calendário corrigido com limites de data (1900 até hoje)
             # O value=None faz o campo começar limpo, sem data padrão
             data_obj_conj = st.date_input(
                 "Data Nascimento Cônjuge", 
@@ -216,13 +201,8 @@ if aba == "📝 Novo Cadastro":
                 dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
             else:
                 dt_nasc_conjuge = ""
-            # Adicionei "_volat" ou qualquer termo para diferenciar de outros campos
             prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_extra_{fid}")     
             
-            # Calendário para o cônjuge
-            #data_obj_conj = st.date_input("Data Nascimento Cônjuge", format="DD/MM/YYYY", key=f"dt_calend_conj_{fid}")
-            #dt_nasc_conjuge = data_obj_conj.strftime("%d/%m/%Y")
-            #prof_conjuge = st.text_input("Profissão do Cônjuge", key=f"prof_conj_input_{fid}")
     
         # 3. Campos que SEMPRE aparecem (Pai e Mãe) - Fora do IF
         nome_mae = st.text_input("Nome da Mãe", key=f"mae_{fid}")
@@ -235,14 +215,14 @@ if aba == "📝 Novo Cadastro":
     st.divider()
     st.subheader("👨‍👩‍👧‍👦 Filhos")
     tem_filhos = st.checkbox("Tem filhos?", key=f"has_kids_{fid}")
-    filhos_dados = [["Não Aplicável", "", 0] for _ in range(3)]
+    #filhos_dados = [["Não Aplicável", "", 0] for _ in range(3)]
+    filhos_dados = [["Não Aplicável", "", 0, "Não Aplicável"] for _ in range(3)]
     
     if tem_filhos:
         for i in range(3):
             if i == 0 or st.checkbox(f"Adicionar Filho(a) {i+1}?", key=f"chk_f{i+1}_{fid}"):
                 c1, c2, c3 = st.columns([2, 1, 1])
                 f_nome = c1.text_input(f"Nome Filho {i+1}", key=f"f{i+1}n_{fid}")
-                #f_nasc = c2.date_input(f"Nasc. Filho {i+1} (DD/MM/AAAA)", value=None,format="DD/MM/YYYY", help="DD/MM/AAAA", key=f"f{i+1}d_{fid}")
                 f_nasc = c2.date_input(
                     f"Nasc. Filho {i+1} (DD/MM/AAAA)", 
                     value=None,
@@ -254,8 +234,8 @@ if aba == "📝 Novo Cadastro":
                 )
                 f_idade = calcular_idade(f_nasc) if f_nasc else 0
                 c3.info(f"Idade: {f_idade}")
-                if f_nome: filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade]
-
+                #if f_nome: filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade]
+                if f_nome: filhos_dados[i] = [f_nome, f_nasc.strftime("%d/%m/%Y") if f_nasc else "", f_idade, "Não Aplicável"]
 
 
 
@@ -281,7 +261,6 @@ if aba == "📝 Novo Cadastro":
             
             if nome_f != "Não Aplicável" and nome_f != "":
                 if idade_f >= 18:
-                    # Cria um campo de batismo para cada filho adulto
                     f_bat_input = st.selectbox(f"Filho(a) {i+1} ({nome_f}) é Batizado?", ["Sim", "Não"], key=f"bat_f{i+1}_igreja_{fid}")
                     # Atualiza a lista de dados dos filhos com a resposta
                     filhos_dados[i][3] = f_bat_input
