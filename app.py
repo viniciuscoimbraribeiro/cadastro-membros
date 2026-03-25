@@ -678,25 +678,33 @@ elif aba == "📊 Estatísticas":
         dados = df.to_dict('records')
 
         for row in dados:
-            # Membro (Coluna "Data Nascimento")
-            m_nasc = row.get("Data Nascimento")
-            m_idade = calcular_idade_manual(m_nasc)
+            # --- 1. MEMBRO ---
+            m_idade = calcular_idade_manual(row.get("Data Nascimento"))
             if m_idade is not None:
                 bat = str(row.get("Batizado", "Não")).strip().capitalize()
-                lista_geral.append({'Idade': m_idade, 'Batizado': bat})
+                lista_geral.append({'Idade': m_idade, 'Batizado': bat, 'Tipo': 'Membro'})
 
-            # Cônjuge (Coluna "Data Nascimento Cônjuge")
-            c_nasc = row.get("Data Nascimento Cônjuge")
-            c_idade = calcular_idade_manual(c_nasc)
+            # --- 2. CÔNJUGE ---
+            c_idade = calcular_idade_manual(row.get("Data Nascimento Cônjuge"))
             if c_idade is not None:
-                lista_geral.append({'Idade': c_idade, 'Batizado': "Sim"})
+                # Cônjuges adultos tendem a ser batizados no seu contexto, 
+                # mas você pode ajustar se houver uma coluna específica para eles.
+                lista_geral.append({'Idade': c_idade, 'Batizado': "Sim", 'Tipo': 'Cônjuge'})
 
-            # Filhos
-            for col_f in ["Data Nascimento do Filho (a) - 1", "Data Nascimento do Filho (a) - 2", "Data Nascimento do Filho (a) - 3"]:
+            # --- 3. FILHOS (Varredura Independente) ---
+            colunas_filhos = [
+                "Data Nascimento do Filho (a) - 1", 
+                "Data Nascimento do Filho (a) - 2", 
+                "Data Nascimento do Filho (a) - 3"
+            ]
+            
+            for col_f in colunas_filhos:
                 f_nasc = row.get(col_f)
-                f_idade = calcular_idade_manual(f_nasc)
-                if f_idade is not None:
-                    lista_geral.append({'Idade': f_idade, 'Batizado': "Não"})
+                # Verifica se o dado existe e não é um marcador de "vazio"
+                if f_nasc and str(f_nasc).strip().lower() not in ["não aplicável", "0", "none", "nan"]:
+                    f_idade = calcular_idade_manual(f_nasc)
+                    if f_idade is not None:
+                        lista_geral.append({'Idade': f_idade, 'Batizado': "Não", 'Tipo': 'Filho'})
 
         df_total = pd.DataFrame(lista_geral)
 
