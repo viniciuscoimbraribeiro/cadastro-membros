@@ -7,6 +7,7 @@ import datetime
 from streamlit_gsheets import GSheetsConnection
 import unicodedata
 import streamlit.components.v1 as components
+import time
 
 # 1. Configuração da página
 st.set_page_config(page_title="IBPS Sumaré", page_icon="logo_igreja.png", layout="wide")
@@ -147,9 +148,15 @@ if aba == "📝 Novo Cadastro":
 
     st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
     
+    # --- MENSAGEM DE SUCESSO TEMPORÁRIA ---
     if 'sucesso' in st.session_state:
-        st.success("✅ Cadastro realizado com sucesso!")
-        del st.session_state['sucesso']
+        placeholder = st.empty() # Cria um espaço vazio
+        with placeholder.container():
+            st.success("✅ Cadastro realizado com sucesso!")
+        
+        time.sleep(5) # Espera 5 segundos
+        placeholder.empty() # Remove a mensagem da tela
+        del st.session_state['sucesso'] # Limpa o estado para não repetir
 
     fid = st.session_state['form_id']
     
