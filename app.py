@@ -637,37 +637,38 @@ elif aba == "🛠️ Catálogo de Serviços":
 
 elif aba == "📊 Estatísticas":
     st.header("📊 Painel Estatístico de Membros")
-    st.write("Análise demográfica consolidada.")
-
+    
     with st.spinner("Lendo dados da planilha..."):
         df = conn.read(ttl="1s")
 
     if df.empty:
-        st.warning("⚠️ Planilha vazia ou não acessível.")
+        st.warning("⚠️ Planilha vazia.")
     else:
-        def calcular_idade_final(valor):
-                    if pd.isna(valor) or str(valor).strip() == "" or str(valor).lower() in ["não aplicável", "none", "nan"]:
-                        return None
-                    try:
-                        # 1. Trata se o Google Sheets enviou um número serial (comum em planilhas)
-                        if isinstance(valor, (int, float)):
-                            # Converte serial do Excel para datetime
-                            dt = pd.to_datetime(valor, unit='d', origin='1899-12-30')
-                        else:
-                            # 2. Tenta converter string (forçando padrão BR)
-                            dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
-                        
-                        if pd.isnat(dt): 
-                            return None
-                        
-                        today = datetime.date.today()
-                        data_nasc = dt.date()
-                        idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
-                        return idade if 0 <= idade <= 110 else None
-                    except:
-                        return None
+        def calcular_idade_debug(valor):
+            # 1. Tratamento de Nulos/Vazios
+            val_limpo = str(valor).strip()
+            if not valor or val_limpo.lower() in ["nan", "none", "", "não aplicável", "0"]:
+                return None
+            
+            try:
+                # 2. Tenta converter (dayfirst=True para padrão BR)
+                dt = pd.to_datetime(val_limpo, dayfirst=True, errors='coerce')
+                
+                if pd.isnat(dt):
+                    # Segunda tentativa: Tenta formato ISO caso o Sheets mande AAAA-MM-DD
+                    dt = pd.to_datetime(val_limpo, errors='coerce')
+                
+                if pd.isnat(dt):
+                    return None
+                
+                today = datetime.date.today()
+                data_nasc = dt.date()
+                idade = today.year - data_nasc.year - ((today.month, today.day) < (data_nasc.month, data_nasc.day))
+                return idade if 0 <= idade <= 110 else None
+            except:
+                return None
 
-        # --- BUSCA DE COLUNAS ---
+        # --- MAPEAMENTO ---
         col_membro = next((c for c in df.columns if "Data Nascimento" in str(c) and "Filho" not in str(c) and "Cônjuge" not in str(c)), None)
         col_conjuge = next((c for c in df.columns if "Data Nascimento Cônjuge" in str(c)), None)
         cols_filhos = [c for c in df.columns if "Data Nascimento do Filho" in str(c)]
@@ -675,41 +676,44 @@ elif aba == "📊 Estatísticas":
 
         lista_geral = []
 
-        # Usamos itertuples() que costuma ser mais performático e preciso com tipos de dados
-        for row in df.itertuples(index=False):
-            # Transformamos a linha em dicionário para facilitar o acesso pelo nome da coluna
-            row_dict = row._asdict()
-            
-            # 1. Membro
-            if col_membro and col_membro in row_dict:
-                id_m = calcular_idade_final(row_dict[col_membro])
+        # Processamento
+        for index, row in df.iterrows():
+            # Membro
+            if col_membro:
+                id_m = calcular_idade_debug(row[col_membro])
                 if id_m is not None:
-                    bat_txt = str(row_dict.get(col_batismo, "Não")).strip().capitalize()
-                    lista_geral.append({'Idade': id_m, 'Batizado': bat_txt})
+                    bat = str(row[col_batismo]).strip().capitalize() if col_batismo else "Não"
+                    lista_geral.append({'Idade': id_m, 'Batizado': bat})
 
-            # 2. Cônjuge
-            if col_conjuge and col_conjuge in row_dict:
-                id_c = calcular_idade_final(row_dict[col_conjuge])
+            # Cônjuge
+            if col_conjuge:
+                id_c = calcular_idade_debug(row[col_conjuge])
                 if id_c is not None:
                     lista_geral.append({'Idade': id_c, 'Batizado': "Sim"})
 
-            # 3. Filhos
+            # Filhos
             for cf in cols_filhos:
-                if cf in row_dict:
-                    id_f = calcular_idade_final(row_dict[cf])
-                    if id_f is not None:
-                        lista_geral.append({'Idade': id_f, 'Batizado': "Não"})
+                id_f = calcular_idade_debug(row[cf])
+                if id_f is not None:
+                    lista_geral.append({'Idade': id_f, 'Batizado': "Não"})
 
         df_total = pd.DataFrame(lista_geral)
 
         if df_total.empty:
-            st.error("❌ O sistema encontrou as colunas, mas não conseguiu processar os valores.")
-            st.info("💡 Tente o seguinte: No Google Sheets, selecione as colunas de data e vá em 'Formatar' -> 'Número' -> 'Texto Simples'. Às vezes o formato de data do Google gera conflito.")
-            # Debug visual para você
-            st.write("Colunas identificadas:", [col_membro, col_conjuge] + cols_filhos)
+            st.error("❌ Falha no processamento dos dados.")
+            
+            # --- SEÇÃO DE DEBUG ---
+            with st.expander("🔍 Investigação Técnica (Por que falhou?)"):
+                if col_membro:
+                    amostra = df[col_membro].dropna().iloc[0] if not df[col_membro].dropna().empty else "Coluna Vazia"
+                    st.write(f"**Nome da Coluna:** {col_membro}")
+                    st.write(f"**Exemplo de dado bruto:** `{amostra}`")
+                    st.write(f"**Tipo do dado:** `{type(amostra)}`")
+                else:
+                    st.write("Coluna 'Data Nascimento' não encontrada.")
         else:
-            # --- GRÁFICOS ---
-            st.success(f"✅ {len(df_total)} indivíduos processados com sucesso!")
+            # --- GRÁFICOS (Se houver sucesso) ---
+            st.success(f"✅ {len(df_total)} pessoas analisadas!")
             
             st.subheader("👥 Distribuição por Faixa Etária")
             bins = [-1, 2, 7, 13, 18, 25, 35, 45, 60, 90, 130]
@@ -724,21 +728,18 @@ elif aba == "📊 Estatísticas":
                 x=alt.X('Faixa', sort=None), y='Qtd', tooltip=['Faixa', 'Qtd']
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
-
-            # Batismo para maiores de 18
+            
+            # Batismo (Adultos)
             df_adultos = df_total[df_total['Idade'] >= 18]
             if not df_adultos.empty:
                 st.divider()
-                st.subheader("💧 Status de Batismo (Adultos)")
                 sim = (df_adultos['Batizado'] == "Sim").sum()
                 nao = (df_adultos['Batizado'] == "Não").sum()
-                
                 c1, c2 = st.columns([1, 2])
-                c1.metric("Total Adultos", len(df_adultos))
+                c1.metric("Adultos", len(df_adultos))
                 c1.metric("Batizados", sim)
                 
-                dados_bat = pd.DataFrame({'Status': ['Sim', 'Não'], 'Qtd': [sim, nao]})
-                pie = alt.Chart(dados_bat).mark_arc(innerRadius=60).encode(
-                    theta="Qtd", color=alt.Color("Status", scale=alt.Scale(range=['#2ecc71', '#e74c3c']))
+                pie = alt.Chart(pd.DataFrame({'S':['Sim','Não'],'Q':[sim,nao]})).mark_arc(innerRadius=50).encode(
+                    theta="Q", color=alt.Color("S", scale=alt.Scale(range=['#2ecc71','#e74c3c']))
                 )
                 c2.altair_chart(pie, use_container_width=True)
