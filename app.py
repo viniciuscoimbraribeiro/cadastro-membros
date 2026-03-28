@@ -340,7 +340,7 @@ if aba == "📝 Novo Cadastro":
             except Exception as e:
                 st.error(f"Erro: {e}")
                 pass 
-elif aba == "🔍":  # Verifique se o nome aqui corresponde exatamente ao rádio da sidebar
+elif aba == "🔍 Consulta de Membros":  # Verifique se o nome aqui corresponde exatamente ao rádio da sidebar
     # 1. GATE DE SEGURANÇA (Premissa Original)
     if "autenticado_consulta" not in st.session_state:
         st.session_state.autenticado_consulta = False
