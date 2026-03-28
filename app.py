@@ -527,7 +527,9 @@ elif aba == "🔍 Consulta de Membros":
                     st.warning("Nenhum membro encontrado.")
 
         with tab_lista:
-            df_full = conn.read(ttl="10s").sort_values(by=df_full.columns[0])
+            # Substitua a linha 530 por esta:
+            df_full = conn.read(ttl="10s")
+            df_full = df_full.sort_values(by=df_full.columns[0])            
             st.write(f"Total: {len(df_full)} membros")
             for idx in df_full.index:
                 renderizar_membro_completo(idx, df_full.loc[idx].tolist(), df_full)
