@@ -507,7 +507,7 @@ def renderizar_membro_completo(idx, linha_data, df_contexto):
                 if st.form_submit_button("❌ Cancelar"):
                     st.session_state[edit_key] = False
                     st.rerun()
-
+if aba == "🔍 Consulta de Membros":
         # --- AGORA AS ABAS DE INTERFACE ---
         tab_busca, tab_lista = st.tabs(["🔎 Pesquisar por Nome", "📋 Lista Geral"])
 
