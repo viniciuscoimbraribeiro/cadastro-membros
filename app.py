@@ -340,32 +340,29 @@ if aba == "📝 Novo Cadastro":
             except Exception as e:
                 st.error(f"Erro: {e}")
                 pass 
-elif aba == "🔍 Consulta de Membros":
-    # 1. Inicializar estado de autenticação
+elif aba == "🔍":  # Verifique se o nome aqui corresponde exatamente ao rádio da sidebar
+    # 1. GATE DE SEGURANÇA (Premissa Original)
     if "autenticado_consulta" not in st.session_state:
         st.session_state.autenticado_consulta = False
 
-    # 2. BLOCO DE ACESSO (Obrigatório antes de qualquer renderização)
     if not st.session_state.autenticado_consulta:
         st.header("🔐 Acesso Restrito")
-        with st.container():
-            senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="pwd_cons")
-            if senha_acesso == "1234":
-                st.session_state.autenticado_consulta = True
-                st.rerun()
-            elif senha_acesso != "":
-                st.error("❌ Senha incorreta.")
-            else:
-                st.info("Painel bloqueado. Insira a credencial.")
-        # Interrompe o script aqui para não "vazar" o conteúdo abaixo enquanto não logar
-        st.stop() 
+        senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="pwd_gate")
+        if senha_acesso == "1234":
+            st.session_state.autenticado_consulta = True
+            st.rerun()
+        elif senha_acesso != "":
+            st.error("❌ Senha incorreta.")
+        else:
+            st.info("Aguardando senha para liberar o painel...")
+        st.stop() # CRÍTICO: Impede que qualquer coisa abaixo apareça sem senha
 
-    # 3. CONTEÚDO LIBERADO (Após st.stop(), só chega aqui se autenticado)
+    # 2. CONTEÚDO LIBERADO
     if st.button("🔒 Bloquear e Sair"):
         st.session_state.autenticado_consulta = False
         st.rerun()
 
-    st.header("🔍 Gerenciar Membros")
+    st.header("🔍 Consultar e Gerenciar Membros")
 
     import unicodedata
     import re
@@ -374,24 +371,61 @@ elif aba == "🔍 Consulta de Membros":
         return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                        if unicodedata.category(c) != 'Mn').lower().strip()
 
-    # Função com sufixo para evitar erro de Duplicate Key
+    def tratar_campo(valor):
+        if not valor or str(valor).lower() in ["nan", "none", "", "não aplicável"]: 
+            return "Não Aplicável"
+        return str(valor)
+
     def renderizar_membro_completo(idx, df_contexto, sufixo):
         membro = df_contexto.loc[idx]
         nome_exibicao = str(membro['Nome Completo']).upper()
         
-        # A key do expander também precisa ser única
-        with st.expander(f"👤 {nome_exibicao}", expanded=False):
-            edit_key = f"edit_{idx}_{sufixo}"
+        with st.expander(f"👤 {nome_exibicao}"):
+            edit_key = f"edit_mode_{idx}_{sufixo}"
             if edit_key not in st.session_state:
                 st.session_state[edit_key] = False
 
             if not st.session_state[edit_key]:
-                st.markdown(f"**CPF:** {membro['CPF']} | **Nasc:** {membro['Data Nascimento']}")
-                st.info(f"**Obs:** {membro['Observações']}")
-                
+                # --- MODO VISUALIZAÇÃO (TODOS OS CAMPOS ORIGINAIS) ---
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    st.markdown("### 📋 Dados")
+                    st.write(f"**Nasc:** {membro['Data Nascimento']}")
+                    st.write(f"**CPF:** {membro['CPF']}")
+                    st.write(f"**RG:** {membro['RG']}")
+                    st.write(f"**Profissão:** {membro['Profissão']}")
+
+                with c2:
+                    st.markdown("### 👨‍👩‍👧 Família")
+                    conjuge = tratar_campo(membro['Nome Completo Conjuge'])
+                    st.write(f"**Cônjuge:** {conjuge}")
+                    if conjuge != "Não Aplicável":
+                        st.write(f"🎂 **Nasc. Cônjuge:** {tratar_campo(membro['Data Nascimento Cônjuge'])}")
+                        st.write(f"💼 **Prof. Cônjuge:** {tratar_campo(membro['Profissão Cônjuge'])}")
+                    
+                    st.write(f"**Pai:** {tratar_campo(membro['Nome do Pai'])}")
+                    st.write(f"**Mãe:** {tratar_campo(membro['Nome da Mãe'])}")
+                    st.write(f"**Estado Civil:** {tratar_campo(membro['Estado Civil'])}")
+                    
+                    st.write("**Lista de Filhos:**")
+                    tem_filho = False
+                    for i in range(1, 4):
+                        f_nome = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
+                        if f_nome != "Não Aplicável":
+                            st.write(f"👶 **{i}º:** {f_nome} ({membro[f'Idade do Filho(a) - {i}']} anos)")
+                            tem_filho = True
+                    if not tem_filho: st.caption("Nenhum filho registrado.")
+
+                with c3:
+                    st.markdown("### ⛪ Igreja")
+                    st.write(f"**Batizado:** {membro['Batizado Membro']}")
+                    st.write(f"**Pastor:** {membro['Pastor Responsável']}")
+                    st.info(f"**Obs:** {tratar_campo(membro['Observações'])}")
+
+                st.divider()
                 col_e, col_d = st.columns(2)
-                # CHAVE ÚNICA: btn_ed_123_busca ou btn_ed_123_lista
-                if col_e.button("📝 Editar", key=f"btn_ed_{idx}_{sufixo}"):
+                # Chaves únicas usando o sufixo (busca ou lista)
+                if col_e.button("📝 Editar Dados", key=f"btn_ed_{idx}_{sufixo}"):
                     st.session_state[edit_key] = True
                     st.rerun()
                 if col_d.button("🗑️ Excluir", key=f"btn_del_{idx}_{sufixo}"):
@@ -399,10 +433,19 @@ elif aba == "🔍 Consulta de Membros":
                     st.success("Excluído!")
                     st.rerun()
             else:
-                with st.form(key=f"form_{idx}_{sufixo}"):
-                    n_nome = st.text_input("Nome", value=membro['Nome Completo'])
+                # --- MODO EDIÇÃO ---
+                with st.form(key=f"form_edit_{idx}_{sufixo}"):
+                    st.markdown(f"### Editando: {nome_exibicao}")
+                    enome = st.text_input("Nome Completo", value=membro['Nome Completo'])
+                    ecpf = st.text_input("CPF", value=membro['CPF'])
+                    ebat = st.selectbox("Batizado", ["Sim", "Não"], index=0 if membro['Batizado Membro']=="Sim" else 1)
+                    eobs = st.text_area("Observações", value=membro['Observações'])
+                    
                     if st.form_submit_button("💾 Salvar"):
-                        df_contexto.at[idx, 'Nome Completo'] = n_nome
+                        df_contexto.at[idx, 'Nome Completo'] = enome
+                        df_contexto.at[idx, 'CPF'] = ecpf
+                        df_contexto.at[idx, 'Batizado Membro'] = ebat
+                        df_contexto.at[idx, 'Observações'] = eobs
                         conn.update(data=df_contexto)
                         st.session_state[edit_key] = False
                         st.rerun()
@@ -411,25 +454,23 @@ elif aba == "🔍 Consulta de Membros":
                         st.rerun()
 
     # ABAS DE INTERFACE
-    t_busca, t_lista = st.tabs(["🔎 Pesquisar", "📋 Lista Geral"])
+    tab_busca, tab_lista = st.tabs(["🔎 Pesquisar por Nome", "📋 Lista Geral"])
 
-    with t_busca:
-        busca = st.text_input("Buscar nome:", key="search_input")
-        if busca:
+    with tab_busca:
+        nome_busca = st.text_input("Digite o nome:", key="search_input_final")
+        if nome_busca:
             df = conn.read(ttl="5s")
-            # Filtro robusto
-            res = df[df['Nome Completo'].astype(str).apply(normalizar).str.contains(normalizar(busca), na=False)].index
-            for i in res:
-                renderizar_membro_completo(i, df, "busca") # Sufixo "busca"
+            # Busca pelo Nome Completo (Coluna 0 ou pelo nome da coluna)
+            indices = df[df['Nome Completo'].astype(str).apply(normalizar).str.contains(normalizar(nome_busca), na=False)].index
+            for idx in indices:
+                renderizar_membro_completo(idx, df, "busca")
 
-    with t_lista:
-        df_l = conn.read(ttl="10s")
-        if not df_l.empty:
-            # Ordenar por nome (coluna 0)
-            df_l = df_l.sort_values(by=df_l.columns[0])
-            st.write(f"Total: {len(df_l)}")
-            for i in df_l.index:
-                renderizar_membro_completo(i, df_l, "lista") # Sufixo "lista"
+    with tab_lista:
+        df_full = conn.read(ttl="10s")
+        df_full = df_full.sort_values(by=df_full.columns[0])
+        st.write(f"Total: {len(df_full)} membros")
+        for idx in df_full.index:
+            renderizar_membro_completo(idx, df_full, "lista")
 
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
