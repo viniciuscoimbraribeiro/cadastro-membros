@@ -442,9 +442,9 @@ elif aba == "🔍 Consulta de Membros":
                     st.write(f"**Pastor:** {membro['Pastor Responsável']}")
                     st.info(f"**Obs:** {tratar_campo(membro['Observações'])}")
                 
-                doc_url = str(membro['Documentos'])
-                if "http" in doc_url:
-                    st.link_button("📂 Visualizar Documento", doc_url, use_container_width=True)
+                    doc_url = str(membro['Documentos'])
+                    if "http" in doc_url:
+                        st.link_button("📂 Visualizar Documento", doc_url, use_container_width=True)
 
                 st.divider()
                 col_pri, col_ed, col_ex = st.columns(3)
