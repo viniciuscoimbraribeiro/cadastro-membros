@@ -341,321 +341,196 @@ if aba == "📝 Novo Cadastro":
                 st.error(f"Erro: {e}")
                 pass 
 elif aba == "🔍 Consulta de Membros":
-
-    # 1. Inicializar o estado de autenticação se não existir
+    # 1. Inicializar o estado de autenticação
     if "autenticado_consulta" not in st.session_state:
         st.session_state.autenticado_consulta = False
 
-    # 2. Se NÃO estiver autenticado, mostra o campo de senha
     if not st.session_state.autenticado_consulta:
         senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin")
-        
-        if senha_acesso == "1234": # Substitua pela sua senha
+        if senha_acesso == "1234":
             st.session_state.autenticado_consulta = True
-            st.rerun() # Recarrega para sumir com o campo de senha imediatamente
+            st.rerun()
         elif senha_acesso != "":
             st.error("❌ Senha incorreta.")
         else:
             st.info("Aguardando senha para liberar o painel...")
-
-    # 3. Se ESTIVER autenticado, mostra apenas o conteúdo da consulta
     else:
-        # Botão opcional para "Sair" ou bloquear novamente
         if st.button("🔒 Bloquear Acesso"):
             st.session_state.autenticado_consulta = False
             st.rerun()
             
-            
         st.header("🔍 Consultar e Gerenciar Membros")
-        
-        nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
-        botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_membros", use_container_width=True)
-        
-        # A busca acontece se apertar ENTER (nome_busca) OU se clicar no BOTÃO (botao_buscar)
-        if nome_busca or botao_buscar:
-            try:
-                # Forçamos a leitura sem cache para garantir dados frescos
-                df = conn.read(ttl="10s")
-                
-                def normalizar(texto):
-                    return "".join(c for c in unicodedata.normalize('NFD', str(texto))
-                                 if unicodedata.category(c) != 'Mn').lower().strip()
-    
-                busca_limpa = normalizar(nome_busca)
-                # Filtro inteligente
-                indices_encontrados = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)].index
-    
-                if not indices_encontrados.empty:
-                    st.success(f"Encontrado(s) {len(indices_encontrados)} registro(s):")
-                    for idx in indices_encontrados:
-                        linha = df.loc[idx].tolist()
+
+        # --- FUNÇÃO AUXILIAR: Normalização ---
+        def normalizar(texto):
+            return "".join(c for c in unicodedata.normalize('NFD', str(texto))
+                           if unicodedata.category(c) != 'Mn').lower().strip()
+
+        # --- FUNÇÃO MESTRE: O SEU CÓDIGO ORIGINAL INTEGRAL ---
+        def renderizar_membro_completo(idx, linha, df_contexto):
+            with st.expander(f"👤 {str(linha[0]).upper()}"):
+                edit_key = f"edit_mode_{idx}"
+                if edit_key not in st.session_state:
+                    st.session_state[edit_key] = False
+
+                if not st.session_state[edit_key]:
+                    # --- MODO VISUALIZAÇÃO (SEU CÓDIGO) ---
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        st.markdown("### 📋 Dados")
+                        import re
+                        val_cpf = str(linha[5]).strip()
+                        if val_cpf.endswith('.0'): val_cpf = val_cpf[:-2]
+                        cpf_limpo = re.sub(r'\D', '', val_cpf)
+                        if len(cpf_limpo) >= 1:
+                            c = cpf_limpo.zfill(11)
+                            cpf_f = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
+                        else: cpf_f = "Não Aplicável"
                         
-                        with st.expander(f"👤 {linha[0].upper()}"):
-                            edit_key = f"edit_mode_{idx}"
-                            if edit_key not in st.session_state:
-                                st.session_state[edit_key] = False
-    
-                            if not st.session_state[edit_key]:
-                                # --- MODO VISUALIZAÇÃO ---
-                                c1, c2, c3 = st.columns(3)
-                                with c1:
-                                    st.markdown("### 📋 Dados")
-                                    import re
-    
-                                    # --- LIMPEZA DO CPF ---
-                                    # Converte para string e remove espaços
-                                    val_cpf = str(linha[5]).strip()
-                                
-                                    # Se o Pandas trouxe o .0, nós cortamos
-                                    if val_cpf.endswith('.0'):
-                                        val_cpf = val_cpf[:-2]
-                                
-                                    # Mantém apenas os números
-                                    cpf_limpo = re.sub(r'\D', '', val_cpf)
-                                
-                                    if len(cpf_limpo) >= 1:
-                                        # Preenche com zero à esquerda até ter 11 dígitos
-                                        c = cpf_limpo.zfill(11)
-                                        cpf_f = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
-                                    else:
-                                        cpf_f = "Não Aplicável"
-    
-                                    # --- LIMPEZA DO RG ---
-                                    val_rg = str(linha[4]).strip()
-                                    if val_rg.endswith('.0'):
-                                        val_rg = val_rg[:-2]
-                                    rg_f = re.sub(r'\D', '', val_rg)
-                                    if not rg_f:
-                                        rg_f = "Não Aplicável"
-    
-                                    # --- EXIBIÇÃO ---
-                                    st.write(f"**Nasc:** {linha[1]}")
-                                    st.write(f"**CPF:** {cpf_f}")
-                                    st.write(f"**RG:** {rg_f}")
-                                    st.write(f"**Profissão:** {linha[3]}")
-                                
-                                with c2:
-                                    st.markdown("### 👨‍👩‍👧 Família")
-                                    
-                                   # Função rápida para tratar campos vazios ou 'nan' (comum em planilhas)
-                                    def tratar_campo(valor):
-                                        if not valor or str(valor).lower() in ["nan", "none", ""]:
-                                            return "Não Aplicável"
-                                        return valor
-                                    
-                                    # Cônjuge com tratamento para vazio
-                                    #conjuge = linha[6] if str(linha[6]).strip() and str(linha[6]) != "nan" else "Não Aplicável"
-                                    #st.write(f"**Cônjuge:** {conjuge}")
-    
-                                    conjuge = tratar_campo(linha[6])
-                                    if conjuge != "Não Aplicável":
-                                        st.write(f"**Cônjuge:** {conjuge}")
-                                        
-                                        # Novos campos nas colunas 7 e 8
-                                        dt_nasc_conjuge = tratar_campo(linha[7])
-                                        prof_conjuge = tratar_campo(linha[8])
-                                        
-                                        if dt_nasc_conjuge != "Não Aplicável":
-                                            st.write(f"🎂 **Nascimento Cônjuge:** {dt_nasc_conjuge}")
-                                        
-                                        if prof_conjuge != "Não Aplicável":
-                                            st.write(f"💼 **Profissão Cônjuge:** {prof_conjuge}")
-                                    else:
-                                        st.write("**Cônjuge:** Não Aplicável")
-                                        
-                                    st.write(f"**Pai:** {tratar_campo(linha[9])}")
-                                    st.write(f"**Mãe:** {tratar_campo(linha[10])}")
-                                    st.write(f"**Estado Civil:** {tratar_campo(linha[11])}")
-                                    
-                                    # --- EXIBIÇÃO DOS FILHOS (OCULTA SE VAZIO OU NÃO APLICÁVEL) ---
-                                    st.write("**Lista de Filhos:**")
-                                    
-                                    f1_nome = tratar_campo(linha[12])
-                                    if f1_nome != "Não Aplicável":
-                                        f1_idade = linha[14]
-                                        st.write(f"👶 **1º:** {f1_nome} ({f1_idade} anos)")
-                                    
-                                    f2_nome = tratar_campo(linha[15])
-                                    if f2_nome != "Não Aplicável":
-                                        f2_idade = linha[17]
-                                        st.write(f"👶 **2º:** {f2_nome} ({f2_idade} anos)")
-                                    
-                                    f3_nome = tratar_campo(linha[18])
-                                    if f3_nome != "Não Aplicável":
-                                        f3_idade = linha[20]
-                                        st.write(f"👶 **3º:** {f3_nome} ({f3_idade} anos)")
-                                    
-                                    # Opcional: Se nenhum dos três existir, você pode mostrar um aviso
-                                    if all(tratar_campo(linha[i]) == "Não Aplicável" for i in [12, 15, 18]):
-                                        st.caption("Nenhum filho registrado.")
-                                with c3:
-                                    st.markdown("### ⛪ Igreja")
-                                    st.write(f"**Batizado:** {linha[21]}") # Era Pastor, agora é Batizado
-                                    st.write(f"**Pastor:** {linha[22]}")   # Era Obs, agora é Pastor
-                                    st.info(f"**Obs:** {linha[23]}")       # Era link, agora é Obs
-                                if len(linha) > 24 and "http" in str(linha[24]):
-                                    st.link_button("📂 Visualizar Documento", linha[24], use_container_width=True)
-    
-                                st.divider()
-                                col_pri, col_ed, col_ex = st.columns(3)
-                                
-                                # 1. BOTÃO IMPRIMIR (Restaurado)
-                                if col_pri.button("🖨️ Imprimir", key=f"btn_prt_{idx}"):
-                                    # Preparando os dados dos filhos para o HTML (Colunas 10, 13 e 16 são os nomes)
-                                    filhos_html = ""
-                                    for i in [10, 13, 16]:
-                                        nome_filho = str(linha[i]).strip()
-                                        if nome_filho and nome_filho.lower() != "não aplicável" and nome_filho != "nan":
-                                            idade_filho = linha[i+2]
-                                            filhos_html += f"<li>{nome_filho} ({idade_filho} anos)</li>"
-                                    
-                                    if not filhos_html:
-                                        filhos_html = "<li>Nenhum filho registrado</li>"
-                                
-                                    html_print = f"""
-                                    <script>
-                                        var win = window.open('', '_blank');
-                                        win.document.write('<html><head><title>Ficha de Membro</title>');
-                                        win.document.write('<style>body {{ font-family: sans-serif; padding: 20px; line-height: 1.6; }}');
-                                        win.document.write('h2 {{ text-align: center; color: #333; border-bottom: 2px solid #333; }}');
-                                        win.document.write('.section {{ margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; }}');
-                                        win.document.write('.title {{ font-weight: bold; background: #f4f4f4; padding: 5px; display: block; margin-bottom: 10px; }}');
-                                        win.document.write('p {{ margin: 5px 0; }} b {{ color: #555; }}');
-                                        win.document.write('</style></head><body>');
-                                        
-                                        win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
-                                
-                                        // SEÇÃO 1: DADOS PESSOAIS
-                                        win.document.write('<div class="section"><span class="title">I. DADOS PESSOAIS</span>');
-                                        win.document.write('<p><b>Nome Completo:</b> {linha[0]}</p>');
-                                        win.document.write('<p><b>Data de Nascimento:</b> {linha[1]}</p>');
-                                        win.document.write('<p><b>Endereço:</b> {linha[2]}</p>');
-                                        win.document.write('<p><b>Profissão:</b> {linha[3]}</p>');
-                                        win.document.write('<p><b>RG:</b> {linha[4]} &nbsp;&nbsp;&nbsp; <b>CPF:</b> {linha[5]}</p>');
-                                        win.document.write('<p><b>Estado Civil:</b> {linha[9]}</p></div>');
-                                
-                                        // SEÇÃO 2: FAMÍLIA
-                                        win.document.write('<div class="section"><span class="title">II. FAMÍLIA</span>');
-                                        win.document.write('<p><b>Cônjuge:</b> {linha[6]}</p>');
-                                        win.document.write('<p><b>Pai:</b> {linha[7]}</p>');
-                                        win.document.write('<p><b>Mãe:</b> {linha[8]}</p>');
-                                        win.document.write('<p><b>Filhos:</b></p><ul>' + `{filhos_html}` + '</ul></div>');
-                                
-                                        // SEÇÃO 3: IGREJA E OBSERVAÇÕES
-                                        win.document.write('<div class="section"><span class="title">III. REGISTRO ECLESIÁSTICO</span>');
-                                        win.document.write('<p><b>Batizado:</b> {linha[19]}</p>');
-                                        win.document.write('<p><b>Pastor Responsável:</b> {linha[20]}</p>');
-                                        win.document.write('<p><b>Observações:</b> {linha[21]}</p></div>');
-                                
-                                        win.document.write('<footer style="text-align:center; font-size: 10px; margin-top: 50px;">Gerado em: ' + new Date().toLocaleString() + '</footer>');
-                                        win.document.write('</body></html>');
-                                        win.document.close();
-                                        
-                                        // Pequeno delay para garantir que o estilo carregue antes de abrir a caixa de impressão
-                                        setTimeout(function() {{ win.print(); }}, 500);
-                                    </script>"""
-                                    st.components.v1.html(html_print, height=0)
-    
-                                # 2. BOTÃO EDITAR (Ativa o formulário)
-                                if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}"):
-                                    st.session_state[edit_key] = True
-                                    st.rerun()
-    
-                                # 3. BOTÃO EXCLUIR (Restaurado)
-                                if col_ex.button("🗑️ Excluir", key=f"btn_del_{idx}"):
-                                    df_drop = df.drop(idx)
-                                    conn.update(data=df_drop)
-                                    st.success("Membro excluído com sucesso!")
-                                    st.rerun()
-    
-                            else:
-                                # --- MODO EDIÇÃO ---
-    
-                                st.markdown(f"### 📝 Editando: {linha[0]}")
-                                
-                                with st.form(key=f"form_edit_{idx}"):
-                                    col_e1, col_e2 = st.columns(2)
-                                    
-                                    # 1. LIMPEZA DO CPF PARA O CAMPO DE TEXTO
-                                    import re
-                                    raw_cpf_edit = str(linha[5]).strip()
-                                    if raw_cpf_edit.endswith('.0'):
-                                        raw_cpf_edit = raw_cpf_edit[:-2]
-                                    cpf_limpo_edit = re.sub(r'\D', '', raw_cpf_edit)
-                                    # 2. LÓGICA DO ESTADO CIVIL
-                                    opcoes_civil = ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"]
-                                    try:
-                                        # Procura a posição do texto que está na planilha dentro da nossa lista
-                                        idx_civil = opcoes_civil.index(str(linha[9]).strip())
-                                    except:
-                                        # Se der erro (ex: campo vazio), assume o primeiro da lista
-                                        idx_civil = 0
-    
-                                    with col_e1:
-                                        n_nome = st.text_input("Nome", value=linha[0])
-                                        
-                                        # Tratamento de Data
-                                        try:
-                                            data_dt = pd.to_datetime(linha[1], dayfirst=True).date()
-                                        except:
-                                            from datetime import date
-                                            data_dt = date.today()
-                                        
-                                        n_nasc = st.date_input("Nascimento", value=data_dt, format="DD/MM/YYYY")
-                                        n_end = st.text_input("Endereço", value=linha[2])
-                                        # CPF LIMPO AQUI:
-                                        n_cpf = st.text_input("CPF", value=cpf_limpo_edit)
-    
-                                    with col_e2:
-                                        n_estado_civil = st.selectbox("Estado Civil", opcoes_civil, index=idx_civil)
-                                        n_conj = st.text_input("Cônjuge", value=linha[6])
-                                        n_batizado = st.selectbox("Batizado", ["Sim", "Não"], index=0 if str(linha[19]) == "Sim" else 1)
-                                        opcoes_pastor = ["Adriano", "Albert", "Luis", "Não Aplicável"]
-                                        
-                                        # Tenta encontrar o índice, se não achar, usa o padrão (índice 3)
-                                        pastor_atual = str(linha[20]).strip()
-                                        idx_pastor = opcoes_pastor.index(pastor_atual) if pastor_atual in opcoes_pastor else 3
-                                        
-                                        n_pastor = st.selectbox("Pastor Responsável", opcoes_pastor, index=idx_pastor)
-                                        n_obs = st.text_area("Observações", value=linha[21])
-                                    
-                                    # BOTÕES COM KEYS ÚNICAS
-                                    c_save, c_cancel = st.columns(2)
-                                    btn_salvar = c_save.form_submit_button("💾 Salvar Alterações")
-                                    btn_cancelar = c_cancel.form_submit_button("❌ Cancelar", key=f"btn_canc_{idx}")
-    
-                                    if btn_salvar:
-                                        # Limpeza final do CPF antes de salvar na planilha
-                                        cpf_final = re.sub(r'\D', '', n_cpf)
-                                        
-                                        df.at[idx, df.columns[0]] = n_nome
-                                        df.at[idx, df.columns[1]] = n_nasc.strftime('%d/%m/%Y')
-                                        df.at[idx, df.columns[2]] = n_end
-                                        df.at[idx, df.columns[5]] = cpf_final
-                                        df.at[idx, df.columns[6]] = n_conj
-                                        df.at[idx, df.columns[9]] = n_estado_civil
-                                        df.at[idx, df.columns[19]] = n_batizado
-                                        df.at[idx, df.columns[20]] = n_pastor
-                                        df.at[idx, df.columns[21]] = n_obs
-                                        
-                                        try:
-                                            conn.update(data=df)
-                                            st.success("Dados atualizados!")
-                                            st.session_state[edit_key] = False
-                                            st.rerun()
-                                        except Exception as e:
-                                            st.error("Erro ao salvar no Google. Tente novamente em instantes.")
-                                    
-                                    if btn_cancelar:
-                                        st.session_state[edit_key] = False
-                                        st.rerun()
-                                    
-    
+                        val_rg = str(linha[4]).strip()
+                        if val_rg.endswith('.0'): val_rg = val_rg[:-2]
+                        rg_f = re.sub(r'\D', '', val_rg)
+                        if not rg_f: rg_f = "Não Aplicável"
+                        
+                        st.write(f"**Nasc:** {linha[1]}")
+                        st.write(f"**CPF:** {cpf_f}")
+                        st.write(f"**RG:** {rg_f}")
+                        st.write(f"**Profissão:** {linha[3]}")
+
+                    with c2:
+                        st.markdown("### 👨‍👩‍👧 Família")
+                        def tratar_campo(valor):
+                            if not valor or str(valor).lower() in ["nan", "none", ""]: return "Não Aplicável"
+                            return valor
+                        
+                        conjuge = tratar_campo(linha[6])
+                        if conjuge != "Não Aplicável":
+                            st.write(f"**Cônjuge:** {conjuge}")
+                            dt_nasc_conjuge = tratar_campo(linha[7])
+                            prof_conjuge = tratar_campo(linha[8])
+                            if dt_nasc_conjuge != "Não Aplicável": st.write(f"🎂 **Nasc. Cônjuge:** {dt_nasc_conjuge}")
+                            if prof_conjuge != "Não Aplicável": st.write(f"💼 **Prof. Cônjuge:** {prof_conjuge}")
+                        else:
+                            st.write("**Cônjuge:** Não Aplicável")
+                        
+                        st.write(f"**Pai:** {tratar_campo(linha[9])}")
+                        st.write(f"**Mãe:** {tratar_campo(linha[10])}")
+                        st.write(f"**Estado Civil:** {tratar_campo(linha[11])}")
+                        
+                        st.write("**Lista de Filhos:**")
+                        for i, p in enumerate([12, 15, 18], 1):
+                            f_nome = tratar_campo(linha[p])
+                            if f_nome != "Não Aplicável":
+                                st.write(f"👶 **{i}º:** {f_nome} ({linha[p+2]} anos)")
+                        
+                        if all(tratar_campo(linha[i]) == "Não Aplicável" for i in [12, 15, 18]):
+                            st.caption("Nenhum filho registrado.")
+
+                    with c3:
+                        st.markdown("### ⛪ Igreja")
+                        st.write(f"**Batizado:** {linha[21]}")
+                        st.write(f"**Pastor:** {linha[22]}")
+                        st.info(f"**Obs:** {linha[23]}")
+                    
+                    if len(linha) > 24 and "http" in str(linha[24]):
+                        st.link_button("📂 Visualizar Documento", linha[24], use_container_width=True)
+
+                    st.divider()
+                    col_pri, col_ed, col_ex = st.columns(3)
+                    
+                    if col_pri.button("🖨️ Imprimir", key=f"btn_prt_{idx}"):
+                        filhos_html = ""
+                        for i in [12, 15, 18]: # Ajustado para bater com as colunas de nomes de filhos
+                            nome_f = str(linha[i]).strip()
+                            if nome_f and nome_f.lower() != "não aplicável" and nome_f != "nan":
+                                filhos_html += f"<li>{nome_f} ({linha[i+2]} anos)</li>"
+                        if not filhos_html: filhos_html = "<li>Nenhum filho registrado</li>"
+                        
+                        html_print = f"""
+                        <script>
+                            var win = window.open('', '_blank');
+                            win.document.write('<html><head><title>Ficha de Membro</title>');
+                            win.document.write('<style>body {{ font-family: sans-serif; padding: 20px; line-height: 1.6; }} h2 {{ text-align: center; border-bottom: 2px solid #333; }} .section {{ margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }} .title {{ font-weight: bold; background: #f4f4f4; }}</style></head><body>');
+                            win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
+                            win.document.write('<div class="section"><span class="title">I. DADOS PESSOAIS</span><p><b>Nome:</b> {linha[0]}</p><p><b>Nasc:</b> {linha[1]}</p><p><b>CPF:</b> {linha[5]}</p></div>');
+                            win.document.write('<div class="section"><span class="title">II. FAMÍLIA</span><p><b>Cônjuge:</b> {linha[6]}</p><ul>' + `{filhos_html}` + '</ul></div>');
+                            win.document.write('</body></html>');
+                            win.document.close();
+                            setTimeout(function() {{ win.print(); }}, 500);
+                        </script>"""
+                        st.components.v1.html(html_print, height=0)
+
+                    if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}"):
+                        st.session_state[edit_key] = True
+                        st.rerun()
+
+                    if col_ex.button("🗑️ Excluir", key=f"btn_del_{idx}"):
+                        df_drop = df_contexto.drop(idx)
+                        conn.update(data=df_drop)
+                        st.success("Excluído!")
+                        st.rerun()
+
+                else:
+                    # --- MODO EDIÇÃO (SEU FORMULÁRIO COMPLETO) ---
+                    st.markdown(f"### 📝 Editando: {linha[0]}")
+                    with st.form(key=f"form_edit_{idx}"):
+                        col_e1, col_e2 = st.columns(2)
+                        import re
+                        raw_cpf_edit = str(linha[5]).strip().replace(".0", "")
+                        cpf_limpo_edit = re.sub(r'\D', '', raw_cpf_edit)
+                        
+                        opcoes_civil = ["Casado(a)", "Solteiro(a)", "Divorciado(a)", "Viúvo(a)"]
+                        try: idx_civil = opcoes_civil.index(str(linha[11]).strip())
+                        except: idx_civil = 0
+
+                        with col_e1:
+                            n_nome = st.text_input("Nome", value=linha[0])
+                            try: data_dt = pd.to_datetime(linha[1], dayfirst=True).date()
+                            except: data_dt = datetime.date.today()
+                            n_nasc = st.date_input("Nascimento", value=data_dt, format="DD/MM/YYYY")
+                            n_cpf = st.text_input("CPF", value=cpf_limpo_edit)
+                        
+                        with col_e2:
+                            n_estado_civil = st.selectbox("Estado Civil", opcoes_civil, index=idx_civil)
+                            n_batizado = st.selectbox("Batizado", ["Sim", "Não"], index=0 if str(linha[21]) == "Sim" else 1)
+                            n_obs = st.text_area("Observações", value=linha[23])
+
+                        c_save, c_cancel = st.columns(2)
+                        if c_save.form_submit_button("💾 Salvar"):
+                            df_contexto.at[idx, df_contexto.columns[0]] = n_nome
+                            df_contexto.at[idx, df_contexto.columns[1]] = n_nasc.strftime('%d/%m/%Y')
+                            df_contexto.at[idx, df_contexto.columns[5]] = re.sub(r'\D', '', n_cpf)
+                            df_contexto.at[idx, df_contexto.columns[11]] = n_estado_civil
+                            df_contexto.at[idx, df_contexto.columns[21]] = n_batizado
+                            df_contexto.at[idx, df_contexto.columns[23]] = n_obs
+                            conn.update(data=df_contexto)
+                            st.session_state[edit_key] = False
+                            st.rerun()
+                        if c_cancel.form_submit_button("❌ Cancelar"):
+                            st.session_state[edit_key] = False
+                            st.rerun()
+
+        # --- AGORA AS ABAS DE INTERFACE ---
+        tab_busca, tab_lista = st.tabs(["🔎 Pesquisar por Nome", "📋 Lista Geral"])
+
+        with tab_busca:
+            nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
+            botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_membros", use_container_width=True)
+            if nome_busca or botao_buscar:
+                df = conn.read(ttl="5s")
+                busca_limpa = normalizar(nome_busca)
+                indices = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)].index
+                if not indices.empty:
+                    for idx in indices:
+                        renderizar_membro_completo(idx, df.loc[idx].tolist(), df)
                 else:
                     st.warning("Nenhum membro encontrado.")
-            except Exception as e:
-                st.error(f"Erro: {e}")
-            pass                            
+
+        with tab_lista:
+            df_full = conn.read(ttl="10s").sort_values(by=df_full.columns[0])
+            st.write(f"Total: {len(df_full)} membros")
+            for idx in df_full.index:
+                renderizar_membro_completo(idx, df_full.loc[idx].tolist(), df_full)
 
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
