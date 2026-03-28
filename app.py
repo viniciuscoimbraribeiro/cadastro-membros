@@ -138,7 +138,7 @@ if 'form_id' not in st.session_state: st.session_state['form_id'] = 0
 # --- NAVEGAÇÃO LATERAL ---
 with st.sidebar:
     st.title("Navegação")
-    aba = st.radio("Ir para:", ["📝 Novo Cadastro", "🔍 Consulta de Membros", "🛠️ Catálogo de Serviços", "📊 Estatísticas"])
+    aba = st.radio("Ir para:", ["📝 Novo Cadastro", "🔍 ", "🛠️ Catálogo de Serviços", "📊 Estatísticas"])
 
 
 if aba == "📝 Novo Cadastro":
@@ -346,6 +346,7 @@ elif aba == "🔍 Consulta de Membros":
         st.session_state.autenticado_consulta = False
 
     if not st.session_state.autenticado_consulta:
+        st.header("🔐 Acesso Restrito")
         senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin")
         if senha_acesso == "1234":
             st.session_state.autenticado_consulta = True
@@ -354,183 +355,165 @@ elif aba == "🔍 Consulta de Membros":
             st.error("❌ Senha incorreta.")
         else:
             st.info("Aguardando senha para liberar o painel...")
+    
     else:
+        # CONTROLE DE ACESSO
         if st.button("🔒 Bloquear Acesso"):
             st.session_state.autenticado_consulta = False
             st.rerun()
             
         st.header("🔍 Consultar e Gerenciar Membros")
 
-        # --- FUNÇÃO AUXILIAR: Normalização ---
+        import unicodedata
+        import re
+
+        # FUNÇÕES AUXILIARES (DEFINIDAS UMA VEZ PARA TODO O ESCOPO)
         def normalizar(texto):
             return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                            if unicodedata.category(c) != 'Mn').lower().strip()
 
-        # --- FUNÇÃO MESTRE: O SEU CÓDIGO ORIGINAL INTEGRAL ---
-def renderizar_membro_completo(idx, linha_data, df_contexto):
-    # Criamos um mapeamento para facilitar o uso dos nomes das colunas
-    membro = df_contexto.loc[idx]
-    nome_exibicao = str(membro['Nome Completo']).upper()
+        def tratar_campo(valor):
+            if not valor or str(valor).lower() in ["nan", "none", "", "não aplicável"]: 
+                return "Não Aplicável"
+            return valor
 
-    with st.expander(f"👤 {nome_exibicao}"):
-        edit_key = f"edit_mode_{idx}"
-        if edit_key not in st.session_state:
-            st.session_state[edit_key] = False
+        def renderizar_membro_completo(idx, linha_data, df_contexto):
+            membro = df_contexto.loc[idx]
+            nome_exibicao = str(membro['Nome Completo']).upper()
+            
+            with st.expander(f"👤 {nome_exibicao}", expanded=False):
+                edit_key = f"edit_mode_{idx}_{nome_exibicao}"
+                if edit_key not in st.session_state:
+                    st.session_state[edit_key] = False
 
-        if not st.session_state[edit_key]:
-            # --- MODO VISUALIZAÇÃO ---
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.markdown("### 📋 Dados")
-                import re
-                # Lógica de CPF original mantida
+                # TRATAMENTO DE CPF E RG (PREMISSA ORIGINAL)
                 val_cpf = str(membro['CPF']).strip().replace('.0', '')
                 cpf_limpo = re.sub(r'\D', '', val_cpf)
-                if len(cpf_limpo) >= 1:
-                    c = cpf_limpo.zfill(11)
-                    cpf_f = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
-                else: cpf_f = "Não Aplicável"
+                if len(cpf_limpo) == 11:
+                    cpf_f = f"{cpf_limpo[:3]}.{cpf_limpo[3:6]}.{cpf_limpo[6:9]}-{cpf_limpo[9:]}"
+                else:
+                    cpf_f = "Não Aplicável"
                 
-                # Lógica de RG original mantida
                 val_rg = str(membro['RG']).strip().replace('.0', '')
-                rg_f = re.sub(r'\D', '', val_rg)
-                if not rg_f: rg_f = "Não Aplicável"
-                
-                st.write(f"**Nasc:** {membro['Data Nascimento']}")
-                st.write(f"**CPF:** {cpf_f}")
-                st.write(f"**RG:** {rg_f}")
-                st.write(f"**Profissão:** {membro['Profissão']}")
+                rg_f = re.sub(r'\D', '', val_rg) if re.sub(r'\D', '', val_rg) else "Não Aplicável"
 
-            with c2:
-                st.markdown("### 👨‍👩‍👧 Família")
-                def tratar_campo(valor):
-                    if not valor or str(valor).lower() in ["nan", "none", "", "não aplicável"]: return "Não Aplicável"
-                    return valor
-                
-                # Lógica de Cônjuge preservada e robusta
-                conjuge = tratar_campo(membro['Nome Completo Conjuge'])
-                if conjuge != "Não Aplicável":
-                    st.write(f"**Cônjuge:** {conjuge}")
-                    dt_nasc_c = tratar_campo(membro['Data Nascimento Cônjuge'])
-                    prof_c = tratar_campo(membro['Profissão Cônjuge'])
-                    if dt_nasc_c != "Não Aplicável": st.write(f"🎂 **Nasc. Cônjuge:** {dt_nasc_c}")
-                    if prof_c != "Não Aplicável": st.write(f"💼 **Prof. Cônjuge:** {prof_c}")
+                if not st.session_state[edit_key]:
+                    # --- MODO VISUALIZAÇÃO ---
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        st.markdown("### 📋 Dados")
+                        st.write(f"**Nasc:** {membro['Data Nascimento']}")
+                        st.write(f"**CPF:** {cpf_f}")
+                        st.write(f"**RG:** {rg_f}")
+                        st.write(f"**Profissão:** {membro['Profissão']}")
+
+                    with c2:
+                        st.markdown("### 👨‍👩‍👧 Família")
+                        conjuge = tratar_campo(membro['Nome Completo Conjuge'])
+                        if conjuge != "Não Aplicável":
+                            st.write(f"**Cônjuge:** {conjuge}")
+                            st.write(f"🎂 **Nasc. Cônjuge:** {tratar_campo(membro['Data Nascimento Cônjuge'])}")
+                            st.write(f"💼 **Prof. Cônjuge:** {tratar_campo(membro['Profissão Cônjuge'])}")
+                        else:
+                            st.write("**Cônjuge:** Não Aplicável")
+                        
+                        st.write(f"**Pai:** {tratar_campo(membro['Nome do Pai'])}")
+                        st.write(f"**Mãe:** {tratar_campo(membro['Nome da Mãe'])}")
+                        st.write(f"**Estado Civil:** {tratar_campo(membro['Estado Civil'])}")
+                        
+                        st.write("**Lista de Filhos:**")
+                        tem_filho = False
+                        for i in range(1, 4):
+                            f_nome = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
+                            if f_nome != "Não Aplicável":
+                                st.write(f"👶 **{i}º:** {f_nome} ({membro[f'Idade do Filho(a) - {i}']} anos)")
+                                tem_filho = True
+                        if not tem_filho: 
+                            st.caption("Nenhum filho registrado.")
+
+                    with c3:
+                        st.markdown("### ⛪ Igreja")
+                        st.write(f"**Batizado:** {membro['Batizado Membro']}")
+                        st.write(f"**Pastor:** {membro['Pastor Responsável']}")
+                        st.info(f"**Obs:** {tratar_campo(membro['Observações'])}")
+
+                    # DOCUMENTOS
+                    doc_url = str(membro['Documentos'])
+                    if "http" in doc_url:
+                        st.link_button("📂 Visualizar Documento", doc_url, use_container_width=True)
+
+                    st.divider()
+                    col_p, col_e, col_d = st.columns(3)
+                    
+                    # BOTÃO IMPRIMIR (LÓGICA HTML INTEGRAL)
+                    if col_p.button("🖨️ Imprimir", key=f"print_{idx}"):
+                        filhos_html = ""
+                        for i in range(1, 4):
+                            f_n = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
+                            if f_n != "Não Aplicável":
+                                filhos_html += f"<li>{f_n} ({membro[f'Idade do Filho(a) - {i}']} anos)</li>"
+                        
+                        html_code = f"""<script>
+                            var w = window.open('', '_blank');
+                            w.document.write('<html><body><h2>FICHA CADASTRAL</h2>');
+                            w.document.write('<p><b>Nome:</b> {membro['Nome Completo']}</p>');
+                            w.document.write('<p><b>CPF:</b> {cpf_f}</p>');
+                            w.document.write('<p><b>Filhos:</b><ul>{filhos_html}</ul></p></body></html>');
+                            w.document.close(); setTimeout(function() {{ w.print(); }}, 500);
+                        </script>"""
+                        st.components.v1.html(html_code, height=0)
+                    
+                    if col_e.button("📝 Editar Dados", key=f"edit_{idx}"):
+                        st.session_state[edit_key] = True
+                        st.rerun()
+
+                    if col_d.button("🗑️ Excluir", key=f"del_{idx}"):
+                        df_new = df_contexto.drop(idx)
+                        conn.update(data=df_new)
+                        st.success("Membro excluído com sucesso!")
+                        st.rerun()
+
                 else:
-                    st.write("**Cônjuge:** Não Aplicável")
-                
-                st.write(f"**Pai:** {tratar_campo(membro['Nome do Pai'])}")
-                st.write(f"**Mãe:** {tratar_campo(membro['Nome da Mãe'])}")
-                st.write(f"**Estado Civil:** {tratar_campo(membro['Estado Civil'])}")
-                
-                st.write("**Lista de Filhos:**")
-                tem_filho = False
-                for i in range(1, 4):
-                    f_nome = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
-                    if f_nome != "Não Aplicável":
-                        idade = membro[f'Idade do Filho(a) - {i}']
-                        st.write(f"👶 **{i}º:** {f_nome} ({idade} anos)")
-                        tem_filho = True
-                
-                if not tem_filho:
-                    st.caption("Nenhum filho registrado.")
+                    # --- MODO EDIÇÃO COMPLETO (REVALIDADO) ---
+                    with st.form(key=f"form_edicao_{idx}"):
+                        st.subheader(f"📝 Editando: {membro['Nome Completo']}")
+                        ed1, ed2 = st.columns(2)
+                        with ed1:
+                            new_nome = st.text_input("Nome Completo", value=membro['Nome Completo'])
+                            new_cpf = st.text_input("CPF (apenas números)", value=cpf_limpo)
+                            new_rg = st.text_input("RG", value=rg_f)
+                            new_prof = st.text_input("Profissão", value=membro['Profissão'])
+                        with ed2:
+                            new_bat = st.selectbox("Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro']=="Sim" else 1)
+                            new_pastor = st.text_input("Pastor Responsável", value=membro['Pastor Responsável'])
+                            new_obs = st.text_area("Observações", value=membro['Observações'])
+                        
+                        if st.form_submit_button("💾 Salvar Alterações"):
+                            df_contexto.at[idx, 'Nome Completo'] = new_nome
+                            df_contexto.at[idx, 'CPF'] = new_cpf
+                            df_contexto.at[idx, 'RG'] = new_rg
+                            df_contexto.at[idx, 'Profissão'] = new_prof
+                            df_contexto.at[idx, 'Batizado Membro'] = new_bat
+                            df_contexto.at[idx, 'Pastor Responsável'] = new_pastor
+                            df_contexto.at[idx, 'Observações'] = new_obs
+                            conn.update(data=df_contexto)
+                            st.session_state[edit_key] = False
+                            st.rerun()
+                        if st.form_submit_button("❌ Cancelar"):
+                            st.session_state[edit_key] = False
+                            st.rerun()
 
-            with c3:
-                st.markdown("### ⛪ Igreja")
-                st.write(f"**Batizado:** {membro['Batizado Membro']}")
-                st.write(f"**Pastor:** {membro['Pastor Responsável']}")
-                st.info(f"**Obs:** {tratar_campo(membro['Observações'])}")
-            
-            # Verificação de Documento (URL)
-            doc_url = str(membro['Documentos'])
-            if "http" in doc_url:
-                st.link_button("📂 Visualizar Documento", doc_url, use_container_width=True)
-
-            st.divider()
-            col_pri, col_ed, col_ex = st.columns(3)
-            
-            # Botão Imprimir (Mantido seu HTML/JS original com chaves únicas)
-            if col_pri.button("🖨️ Imprimir", key=f"btn_prt_{idx}_{nome_exibicao}"):
-                filhos_html = ""
-                for i in range(1, 4):
-                    f_n = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
-                    if f_n != "Não Aplicável":
-                        filhos_html += f"<li>{f_n} ({membro[f'Idade do Filho(a) - {i}']} anos)</li>"
-                if not filhos_html: filhos_html = "<li>Nenhum filho registrado</li>"
-                
-                html_print = f"""
-                <script>
-                    var win = window.open('', '_blank');
-                    win.document.write('<html><head><title>Ficha de Membro</title>');
-                    win.document.write('<style>body {{ font-family: sans-serif; padding: 20px; }} h2 {{ text-align: center; border-bottom: 2px solid #333; }} .section {{ margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }}</style></head><body>');
-                    win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
-                    win.document.write('<div class="section"><b>Nome:</b> {membro['Nome Completo']}<br><b>CPF:</b> {cpf_f}</div>');
-                    win.document.write('<div class="section"><b>Cônjuge:</b> {conjuge}<ul>{filhos_html}</ul></div>');
-                    win.document.write('</body></html>');
-                    win.document.close();
-                    setTimeout(function() {{ win.print(); }}, 500);
-                </script>"""
-                st.components.v1.html(html_print, height=0)
-
-            if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}_{nome_exibicao}"):
-                st.session_state[edit_key] = True
-                st.rerun()
-
-            if col_ex.button("🗑️ Excluir", key=f"btn_del_{idx}_{nome_exibicao}"):
-                df_drop = df_contexto.drop(idx)
-                conn.update(data=df_drop)
-                st.success("Excluído!")
-                st.rerun()
-
-        else:
-            # --- MODO EDIÇÃO ---
-            st.markdown(f"### 📝 Editando: {membro['Nome Completo']}")
-            with st.form(key=f"form_edit_{idx}"):
-                col_e1, col_e2 = st.columns(2)
-                
-                with col_e1:
-                    n_nome = st.text_input("Nome", value=membro['Nome Completo'])
-                    n_cpf = st.text_input("CPF", value=cpf_limpo)
-                
-                with col_e2:
-                    n_batizado = st.selectbox("Batizado", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
-                    n_obs = st.text_area("Observações", value=membro['Observações'])
-
-                if st.form_submit_button("💾 Salvar Alterações"):
-                    df_contexto.at[idx, 'Nome Completo'] = n_nome
-                    df_contexto.at[idx, 'CPF'] = n_cpf
-                    df_contexto.at[idx, 'Batizado Membro'] = n_batizado
-                    df_contexto.at[idx, 'Observações'] = n_obs
-                    conn.update(data=df_contexto)
-                    st.session_state[edit_key] = False
-                    st.rerun()
-                
-                if st.form_submit_button("❌ Cancelar"):
-                    st.session_state[edit_key] = False
-                    st.rerun()
-if aba == "🔍 Consulta de Membros":
-        # --- AGORA AS ABAS DE INTERFACE ---
-        tab_busca, tab_lista = st.tabs(["🔎 Pesquisar por Nome", "📋 Lista Geral"])
-
+        # --- INTERFACE DE BUSCA E LISTA ---
+        tab_busca, tab_lista = st.tabs(["🔎 Pesquisa", "📋 Lista Geral"])
         with tab_busca:
-            nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca")
-            botao_buscar = st.button("🔎 Buscar por Membro", key="btn_busca_membros", use_container_width=True)
-            if nome_busca or botao_buscar:
+            query = st.text_input("Digite o nome:", key="search_bar")
+            if query:
                 df = conn.read(ttl="5s")
-                busca_limpa = normalizar(nome_busca)
-                indices = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)].index
-                if not indices.empty:
-                    for idx in indices:
-                        renderizar_membro_completo(idx, df.loc[idx].tolist(), df)
-                else:
-                    st.warning("Nenhum membro encontrado.")
-
+                res = df[df.iloc[:, 0].astype(str).apply(normalizar).str.contains(normalizar(query), na=False)].index
+                for r in res: renderizar_membro_completo(r, None, df)
         with tab_lista:
-            # Substitua a linha 530 por esta:
-            df_full = conn.read(ttl="10s")
-            df_full = df_full.sort_values(by=df_full.columns[0])            
-            st.write(f"Total: {len(df_full)} membros")
-            for idx in df_full.index:
-                renderizar_membro_completo(idx, df_full.loc[idx].tolist(), df_full)
+            df_full = conn.read(ttl="10s").sort_values(by=conn.read(ttl="10s").columns[0])
+            for i in df_full.index: renderizar_membro_completo(i, None, df_full)
 
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
