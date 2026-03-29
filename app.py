@@ -462,7 +462,7 @@ elif aba == "🔍 Consulta de Membros":
                 st.divider()
                 col_pri, col_ed, col_ex = st.columns(3)
                 if col_pri.button("🖨️ Imprimir Ficha", key=f"btn_prt_{idx}_{sufixo}"):
-                  filhos_html = "".join([f"<li>{tratar_campo(membro[f'Nome do Filho (a) - {i}'])} ({membro[f'Idade do Filho(a) - {i}']} anos)</li>" 
+                    filhos_html = "".join([f"<li>{tratar_campo(membro[f'Nome do Filho (a) - {i}'])} ({membro[f'Idade do Filho(a) - {i}']} anos)</li>" 
                                          for i in range(1,4) if tratar_campo(membro[f'Nome do Filho (a) - {i}']) != "Não Aplicável"])
                     if not filhos_html: filhos_html = "<li>Nenhum filho registrado</li>"
                     
