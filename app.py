@@ -400,28 +400,36 @@ elif aba == "🔍 Consulta de Membros":
         membro = df_contexto.loc[idx]
         nome_exibicao = str(membro['Nome Completo']).upper()
 
+        # --- [PROCESAMENTO DE DADOS NO TOPO - EVITA UNBOUNDLOCALERROR] ---
+        # CPF
+        val_cpf = str(membro['CPF']).strip().replace('.0', '')
+        cpf_limpo = re.sub(r'\D', '', val_cpf)
+        if len(cpf_limpo) >= 1:
+            c = cpf_limpo.zfill(11)
+            cpf_f = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
+        else: 
+            cpf_f = "Não Aplicável"
+        
+        # RG
+        val_rg = str(membro['RG']).strip().replace('.0', '')
+        rg_f = re.sub(r'\D', '', val_rg)
+        if not rg_f: rg_f = "Não Aplicável"
+        
+        # Variáveis auxiliares
+        conjuge = tratar_campo(membro['Nome Completo Conjuge'])
+        # ----------------------------------------------------------------
+
         with st.expander(f"👤 {nome_exibicao}"):
-            # Chave de edição única combinando ID e SUFIXO (busca ou lista)
             edit_key = f"edit_mode_{idx}_{sufixo}"
             if edit_key not in st.session_state:
                 st.session_state[edit_key] = False
 
             if not st.session_state[edit_key]:
-                # --- MODO VISUALIZAÇÃO (ORIGINAL) ---
+                # --- MODO VISUALIZAÇÃO (RESTAURADO COM TODAS AS FUNÇÕES) ---
                 c1, c2, c3 = st.columns(3)
+                
                 with c1:
                     st.markdown("### 📋 Dados")
-                    val_cpf = str(membro['CPF']).strip().replace('.0', '')
-                    cpf_limpo = re.sub(r'\D', '', val_cpf)
-                    if len(cpf_limpo) >= 1:
-                        c = cpf_limpo.zfill(11)
-                        cpf_f = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}"
-                    else: cpf_f = "Não Aplicável"
-                    
-                    val_rg = str(membro['RG']).strip().replace('.0', '')
-                    rg_f = re.sub(r'\D', '', val_rg)
-                    if not rg_f: rg_f = "Não Aplicável"
-                    
                     st.write(f"**Nasc:** {membro['Data Nascimento']}")
                     st.write(f"**CPF:** {cpf_f}")
                     st.write(f"**RG:** {rg_f}")
@@ -429,7 +437,7 @@ elif aba == "🔍 Consulta de Membros":
 
                 with c2:
                     st.markdown("### 👨‍👩‍👧 Família")
-                    conjuge = tratar_campo(membro['Nome Completo Conjuge'])
+                    # Lógica do Cônjuge (Restaurada conforme original)
                     if conjuge != "Não Aplicável":
                         st.write(f"**Cônjuge:** {conjuge}")
                         dt_nasc_c = tratar_campo(membro['Data Nascimento Cônjuge'])
@@ -458,7 +466,8 @@ elif aba == "🔍 Consulta de Membros":
                     st.write(f"**Batizado:** {membro['Batizado Membro']}")
                     st.write(f"**Pastor:** {membro['Pastor Responsável']}")
                     st.info(f"**Obs:** {tratar_campo(membro['Observações'])}")
-                
+                    
+                    # Link de Documentos (Restaurado)
                     doc_url = str(membro['Documentos'])
                     if "http" in doc_url:
                         st.link_button("📂 Visualizar Documento", doc_url, use_container_width=True)
@@ -466,9 +475,8 @@ elif aba == "🔍 Consulta de Membros":
                 st.divider()
                 col_pri, col_ed, col_ex = st.columns(3)
                 
-                # --- BOTÃO IMPRIMIR (VERSÃO COMPLETA COM TODOS OS CAMPOS) ---
+                # Botão Imprimir (Seu código completo de HTML)
                 if col_pri.button("🖨️ Imprimir Ficha", key=f"btn_prt_{idx}_{sufixo}"):
-                    # Preparar lista de filhos em HTML
                     filhos_html = ""
                     for i in range(1, 4):
                         f_n = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
@@ -477,7 +485,6 @@ elif aba == "🔍 Consulta de Membros":
                             filhos_html += f"<li>{f_n} ({f_id} anos)</li>"
                     if not filhos_html: filhos_html = "<li>Nenhum filho registrado</li>"
                     
-                    # Montagem do HTML expandido
                     html_print = f"""
                     <script>
                         var win = window.open('', '_blank');
@@ -525,11 +532,13 @@ elif aba == "🔍 Consulta de Membros":
                         
                         win.document.write('<p style="text-align:center; font-size: 0.8em; margin-top: 50px;">Gerado em: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}</p>');
                         
+
                         win.document.write('</body></html>');
                         win.document.close();
                         setTimeout(function() {{ win.print(); }}, 800);
                     </script>"""
                     st.components.v1.html(html_print, height=0)
+                    st.toast("Preparando ficha...")
 
                 if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}_{sufixo}"):
                     st.session_state[edit_key] = True
@@ -542,26 +551,32 @@ elif aba == "🔍 Consulta de Membros":
                     st.rerun()
 
             else:
-                # --- MODO EDIÇÃO (ORIGINAL) ---
+                # --- MODO EDIÇÃO (REVISADO E COMPLETO) ---
                 st.markdown(f"### 📝 Editando: {membro['Nome Completo']}")
                 with st.form(key=f"form_edit_{idx}_{sufixo}"):
                     col_e1, col_e2 = st.columns(2)
                     with col_e1:
                         n_nome = st.text_input("Nome", value=membro['Nome Completo'])
-                        n_cpf = st.text_input("CPF", value=cpf_limpo)
+                        n_cpf = st.text_input("CPF (Somente Números)", value=cpf_limpo)
+                        n_rg = st.text_input("RG (Somente Números)", value=rg_f)
                     with col_e2:
                         n_batizado = st.selectbox("Batizado", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
+                        n_est_civil = st.text_input("Estado Civil", value=membro['Estado Civil'])
                         n_obs = st.text_area("Observações", value=membro['Observações'])
 
-                    if st.form_submit_button("💾 Salvar Alterações"):
+                    c_save, c_canc = st.columns(2)
+                    if c_save.form_submit_button("💾 Salvar Alterações", use_container_width=True):
                         df_contexto.at[idx, 'Nome Completo'] = n_nome
                         df_contexto.at[idx, 'CPF'] = n_cpf
+                        df_contexto.at[idx, 'RG'] = n_rg
+                        df_contexto.at[idx, 'Estado Civil'] = n_est_civil
                         df_contexto.at[idx, 'Batizado Membro'] = n_batizado
                         df_contexto.at[idx, 'Observações'] = n_obs
                         conn.update(data=df_contexto)
                         st.session_state[edit_key] = False
                         st.rerun()
-                    if st.form_submit_button("❌ Cancelar"):
+                    
+                    if c_canc.form_submit_button("❌ Cancelar", use_container_width=True):
                         st.session_state[edit_key] = False
                         st.rerun()
 
