@@ -530,7 +530,7 @@ elif aba == "🔍 Consulta de Membros":
                     st.success("Excluído!")
                     st.rerun()
 
-        else:
+            else:
                 # --- MODO EDIÇÃO (COM REGRAS DE SEGURANÇA E REATIVIDADE) ---
                 st.markdown(f"### 📝 Atualizar Cadastro: {membro['Nome Completo']}")
                 st.caption("⚠️ Dados de Filiação, RG e CPF são imutáveis.")
