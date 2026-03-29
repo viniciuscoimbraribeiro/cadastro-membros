@@ -526,9 +526,9 @@ def renderizar_membro_completo(idx, df_contexto, sufixo):
                         win.document.write('</body></html>');
                         win.document.close();
                         setTimeout(function() {{ win.print(); }}, 800);
-                        </script>"""
-                        st.components.v1.html(html_print, height=0)
-                        st.toast("Preparando ficha...")
+                    </script>"""
+                    st.components.v1.html(html_print, height=0)
+                    st.toast("Preparando ficha...")
                     
             if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}_{sufixo}"):
                 st.session_state[edit_key] = True
