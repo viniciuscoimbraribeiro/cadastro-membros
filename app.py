@@ -635,21 +635,30 @@ elif aba == "🔍 Consulta de Membros":
                                              index=["Adriano", "Albert", "Luis", "Não Aplicável"].index(membro['Pastor Responsável']) if membro['Pastor Responsável'] in ["Adriano", "Albert", "Luis"] else 3)
                     ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']))
 
-                    if st.form_submit_button("💾 Salvar Alterações", use_container_width=True):
-                        # Lógica de salvamento (Mantenha seu df_contexto.at...)
+                    b_save, b_canc = st.columns(2)
+                    if b_save.form_submit_button("💾 Salvar Alterações", use_container_width=True):
+                        # 1. Atualizar campos básicos
                         df_contexto.at[idx, 'Nome Completo'] = ed_nome
+                        df_contexto.at[idx, 'Profissão'] = ed_prof
                         df_contexto.at[idx, 'Estado Civil'] = ed_civil
+                        df_contexto.at[idx, 'Batizado Membro'] = ed_bat_mem
+                        df_contexto.at[idx, 'Pastor Responsável'] = ed_pastor
+                        df_contexto.at[idx, 'Observações'] = ed_obs
+                        
+                        # 2. Lógica de Cônjuge (Limpeza automática se não for casado)
                         df_contexto.at[idx, 'Nome Completo Conjuge'] = ed_conj
-                        df_contexto.at[idx, 'Cônjuge é Batizado?'] = ed_bat_conj
-                       # 3. Atualizar Filhos
+                        df_contexto.at[idx, 'Data Nascimento Cônjuge'] = ed_nasc_conj
+                        df_contexto.at[idx, 'Profissão Cônjuge'] = ed_prof_conj
+                        
+                        # 3. Atualizar Filhos
                         for i in range(1, 4):
                             df_contexto.at[idx, f'Nome do Filho (a) - {i}'] = novos_dados_filhos[f'nome_{i}']
                             df_contexto.at[idx, f'Idade do Filho(a) - {i}'] = novos_dados_filhos[f'idade_{i}']
                             df_contexto.at[idx, f'Batismo Filho {i}'] = novos_dados_filhos[f'bat_{i}']
-
+    
                         conn.update(data=df_contexto)
                         st.session_state[edit_key] = False
-                        st.success("Dados atualizados!")
+                        st.success("Dados atualizados com segurança!")
                         st.rerun()
 
                     if b_canc.form_submit_button("❌ Cancelar", use_container_width=True):
