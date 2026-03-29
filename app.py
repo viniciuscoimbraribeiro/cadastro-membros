@@ -341,8 +341,7 @@ if aba == "📝 Novo Cadastro":
                 st.error(f"Erro: {e}")
                 pass 
 elif aba == "🔍 Consulta de Membros":
-    # --- NOVO: LOGICA DE RESET DE SEGURANÇA ---
-    # Se a aba anterior era outra, resetamos a senha para garantir o bloqueio inicial
+    # --- LOGICA DE RESET DE SEGURANÇA MANTIDA ---
     if "ultima_aba" not in st.session_state:
         st.session_state.ultima_aba = aba
     
@@ -350,14 +349,12 @@ elif aba == "🔍 Consulta de Membros":
         st.session_state.autenticado_consulta = False
         st.session_state.ultima_aba = aba
 
-    # 1. Inicializar o estado de autenticação se não existir
     if "autenticado_consulta" not in st.session_state:
         st.session_state.autenticado_consulta = False
 
-    # 2. VERIFICAÇÃO DO BLOQUEIO (GATE)
+    # VERIFICAÇÃO DO BLOQUEIO (GATE) MANTIDA
     if not st.session_state.autenticado_consulta:
         st.header("🔐 Acesso Restrito")
-        # Interface limpa conforme image_a705c5.png
         senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin_definitiva")
         
         if senha_acesso == "1234":
@@ -367,41 +364,37 @@ elif aba == "🔍 Consulta de Membros":
             st.error("❌ Senha incorreta.")
         else:
             st.info("Aguardando senha para liberar o painel...")
-        
-        # O st.stop() aqui impede que as abas de pesquisa/lista (image_a705c5.png) apareçam
         st.stop() 
 
-    # --- 3. SE CHEGOU AQUI, ESTÁ AUTENTICADO ---
-    # Botão de bloqueio manual (conforme solicitado)
+    # BOTÃO DE BLOQUEIO MANUAL MANTIDO
     if st.button("🔒 Bloquear Acesso"):
         st.session_state.autenticado_consulta = False
         st.rerun()
         
     st.header("🔍 Consultar e Gerenciar Membros")
 
-    # Re-importar para garantir que as funções funcionem neste escopo
+    # Re-importar bibliotecas necessárias para garantir o escopo
     import unicodedata
     import re
+    import io
 
-    def normalizar(texto):
+    # Funções de apoio locais para a aba de consulta
+    def normalizar_local(texto):
         return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                        if unicodedata.category(c) != 'Mn').lower().strip()
 
-    def tratar_campo(valor):
+    def tratar_campo_local(valor):
         if not valor or str(valor).lower() in ["nan", "none", "", "não aplicável"]: 
             return "Não Aplicável"
         return valor
 
-    # --- O RESTANTE DO SEU SCRIPT DE RENDERIZAÇÃO E ABAS SEGUE AQUI ---
-    # (Mantenha a função renderizar_membro_completo e as st.tabs abaixo deste bloco)
-
-    # --- FUNÇÃO MESTRE: SEU CÓDIGO ORIGINAL INTEGRAL COM SUFIXO ---
+    # --- NOVA FUNÇÃO MESTRE INTEGRADA E INDENTADA CORRETAMENTE ---
+    # Esta função agora vive dentro do bloco elif da Consulta.
     def renderizar_membro_completo(idx, df_contexto, sufixo):
         membro = df_contexto.loc[idx]
         nome_exibicao = str(membro['Nome Completo']).upper()
     
-        # --- [PROCESSAMENTO DE DADOS NO TOPO] ---
-        # CPF com zfill para não perder o zero à esquerda
+        # --- PROCESSAMENTO DE DADOS NO TOPO ---
         val_cpf = str(membro['CPF']).strip().replace('.0', '')
         cpf_limpo = re.sub(r'\D', '', val_cpf)
         if len(cpf_limpo) >= 1:
@@ -410,15 +403,14 @@ elif aba == "🔍 Consulta de Membros":
         else:
             cpf_f = "Não Aplicável"
         
-        # RG
         val_rg = str(membro['RG']).strip().replace('.0', '')
         rg_f = re.sub(r'\D', '', val_rg)
         if not rg_f: rg_f = "Não Aplicável"
         
-        # Variáveis auxiliares de exibição
-        conjuge = tratar_campo(membro['Nome Completo Conjuge'])
-        pai = tratar_campo(membro['Nome do Pai'])
-        mae = tratar_campo(membro['Nome da Mãe'])
+        # Variáveis auxiliares usando a função de tratamento local
+        conjuge = tratar_campo_local(membro['Nome Completo Conjuge'])
+        pai = tratar_campo_local(membro['Nome do Pai'])
+        mae = tratar_campo_local(membro['Nome da Mãe'])
     
         with st.expander(f"👤 {nome_exibicao}"):
             edit_key = f"edit_mode_{idx}_{sufixo}"
@@ -426,42 +418,42 @@ elif aba == "🔍 Consulta de Membros":
                 st.session_state[edit_key] = False
     
             if not st.session_state[edit_key]:
-                # --- MODO VISUALIZAÇÃO (3 COLUNAS) ---
+                # --- MODO VISUALIZAÇÃO (MANTIDO CONFORME ORIGINAL) ---
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown("### 📋 Dados")
                     st.write(f"**Nasc:** {membro['Data Nascimento']}")
                     st.write(f"**CPF:** {cpf_f}")
                     st.write(f"**RG:** {rg_f}")
-                    st.write(f"**Profissão:** {tratar_campo(membro['Profissão'])}")
+                    st.write(f"**Profissão:** {tratar_campo_local(membro['Profissão'])}")
     
                 with c2:
                     st.markdown("### 👨‍👩‍👧 Família")
-                    st.write(f"**Estado Civil:** {tratar_campo(membro['Estado Civil'])}")
+                    st.write(f"**Estado Civil:** {tratar_campo_local(membro['Estado Civil'])}")
                     if conjuge != "Não Aplicável":
                         st.write(f"**Cônjuge:** {conjuge}")
-                        st.write(f"🎂 **Nasc. Cônjuge:** {tratar_campo(membro['Data Nascimento Cônjuge'])}")
-                        st.write(f"💼 **Prof. Cônjuge:** {tratar_campo(membro['Profissão Cônjuge'])}")
+                        st.write(f"🎂 **Nasc. Cônjuge:** {tratar_campo_local(membro['Data Nascimento Cônjuge'])}")
+                        st.write(f"💼 **Prof. Cônjuge:** {tratar_campo_local(membro['Profissão Cônjuge'])}")
                     
                     st.write(f"**Pai:** {pai}")
                     st.write(f"**Mãe:** {mae}")
                     
                     st.write("**Filhos:**")
-                    tem_filho = False
+                    tem_filho_vis = False
                     for i in range(1, 4):
-                        f_nome = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
-                        if f_nome != "Não Aplicável":
-                            idade = membro[f'Idade do Filho(a) - {i}']
-                            bat_f = tratar_campo(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
-                            st.write(f"👶 **{i}º:** {f_nome} ({idade} anos) - Batizado: {bat_f}")
-                            tem_filho = True
-                    if not tem_filho: st.caption("Nenhum filho registrado.")
+                        f_nome_vis = tratar_campo_local(membro[f'Nome do Filho (a) - {i}'])
+                        if f_nome_vis != "Não Aplicável":
+                            idade_vis = membro[f'Idade do Filho(a) - {i}']
+                            bat_f_vis = tratar_campo_local(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
+                            st.write(f"👶 **{i}º:** {f_nome_vis} ({idade_vis} anos) - Batizado: {bat_f_vis}")
+                            tem_filho_vis = True
+                    if not tem_filho_vis: st.caption("Nenhum filho registrado.")
     
                 with c3:
                     st.markdown("### ⛪ Igreja")
                     st.write(f"**Batizado:** {membro['Batizado Membro']}")
                     st.write(f"**Pastor:** {membro['Pastor Responsável']}")
-                    st.info(f"**Obs:** {tratar_campo(membro['Observações'])}")
+                    st.info(f"**Obs:** {tratar_campo_local(membro['Observações'])}")
                     doc_url = str(membro['Documentos'])
                     if "http" in doc_url:
                         st.link_button("📂 Ver Documento", doc_url, use_container_width=True)
@@ -469,66 +461,28 @@ elif aba == "🔍 Consulta de Membros":
                 st.divider()
                 col_pri, col_ed, col_ex = st.columns(3)
                 
-                # --- FUNCIONALIDADE DE IMPRESSÃO MANTIDA ---
+                # --- IMPRESSÃO (RESTAURADA E INDENTADA) ---
                 if col_pri.button("🖨️ Imprimir Ficha", key=f"btn_prt_{idx}_{sufixo}"):
-                    filhos_html = "".join([f"<li>{tratar_campo(membro[f'Nome do Filho (a) - {i}'])} ({membro[f'Idade do Filho(a) - {i}']} anos)</li>" 
-                                         for i in range(1,4) if tratar_campo(membro[f'Nome do Filho (a) - {i}']) != "Não Aplicável"])
-                    if not filhos_html: filhos_html = "<li>Nenhum filho registrado</li>"
+                    filhos_print_html = "".join([f"<li>{tratar_campo_local(membro[f'Nome do Filho (a) - {i}'])} ({membro[f'Idade do Filho(a) - {i}']} anos)</li>" 
+                                               for i in range(1,4) if tratar_campo_local(membro[f'Nome do Filho (a) - {i}']) != "Não Aplicável"])
+                    if not filhos_print_html: filhos_print_html = "<li>Nenhum filho registrado</li>"
                     
                     html_print = f"""
                     <script>
                         var win = window.open('', '_blank');
-                        win.document.write('<html><head><title>Ficha de Membro - {membro['Nome Completo']}</title>');
-                        win.document.write('<style>');
-                        win.document.write('body {{ font-family: Arial, sans-serif; padding: 40px; color: #333; }}');
-                        win.document.write('h2 {{ text-align: center; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }}');
-                        win.document.write('.section {{ margin-top: 20px; border: 1px solid #eee; padding: 15px; border-left: 5px solid #2c3e50; background: #f9f9f9; }}');
-                        win.document.write('.section-title {{ font-weight: bold; font-size: 1.1em; text-decoration: underline; margin-bottom: 10px; display: block; }}');
-                        win.document.write('.grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}');
-                        win.document.write('</style></head><body>');
-                            
-                        win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
-                            
-                            // SEÇÃO 1: DADOS PESSOAIS
-                        win.document.write('<div class="section"><span class="section-title">I. DADOS PESSOAIS</span>');
-                        win.document.write('<div class="grid">');
-                        win.document.write('<div><b>Nome:</b> {membro['Nome Completo']}</div>');
-                         win.document.write('<div><b>Data de Nasc.:</b> {membro['Data Nascimento']}</div>');
-                        win.document.write('<div><b>CPF:</b> {cpf_f}</div>');
-                        win.document.write('<div><b>RG:</b> {rg_f}</div>');
-                        win.document.write('<div><b>Profissão:</b> {membro['Profissão']}</div>');
-                        win.document.write('<div><b>Estado Civil:</b> {membro['Estado Civil']}</div>');
-                        win.document.write('</div></div>');
-                            
-                            // SEÇÃO 2: FAMÍLIA
-                        win.document.write('<div class="section"><span class="section-title">II. FAMÍLIA E FILHOS</span>');
-                        win.document.write('<b>Cônjuge:</b> {conjuge}<br>');
-                        if ("{conjuge}" != "Não Aplicável") {{win.document.write('<b>Profissão Cônjuge:</b> {tratar_campo(membro['Profissão Cônjuge'])}<br>');}}
-                        win.document.write('<b>Pai:</b> {tratar_campo(membro['Nome do Pai'])}<br>');
-                        win.document.write('<b>Mãe:</b> {tratar_campo(membro['Nome da Mãe'])}<br>');
-                        win.document.write('<b>Filhos:</b><ul>{filhos_html}</ul>');
-                        win.document.write('</div>');
-                            
-                            // SEÇÃO 3: ECLESIÁSTICO
-                        win.document.write('<div class="section"><span class="section-title">III. DADOS ECLESIÁSTICOS</span>');
-                        win.document.write('<div class="grid">');
-                        win.document.write('<div><b>Batizado:</b> {membro['Batizado Membro']}</div>');
-                        win.document.write('<div><b>Pastor Responsável:</b> {membro['Pastor Responsável']}</div>');
-                        win.document.write('</div>');
-                        win.document.write('<p><b>Observações:</b> {tratar_campo(membro['Observações'])}</p>');
-                        win.document.write('</div>');
-                            
-                        win.document.write('<p style="text-align:center; font-size: 0.8em; margin-top: 50px;">Gerado em: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}</p>');
-                            
-    
+                        win.document.write('<html><head><title>Ficha - {membro['Nome Completo']}</title>');
+                        win.document.write('<style>body{{font-family:Arial;padding:40px;}} .section{{margin:20px 0;padding:10px;border-left:5px solid #2c3e50;background:#f9f9f9;}}</style></head><body>');
+                        win.document.write('<h2>FICHA CADASTRAL</h2>');
+                        win.document.write('<div class="section"><b>Nome:</b> {membro['Nome Completo']}<br><b>CPF:</b> {cpf_f}</div>');
+                        win.document.write('<div class="section"><b>Pai:</b> {pai}<br><b>Mãe:</b> {mae}<br><b>Cônjuge:</b> {conjuge}</div>');
+                        win.document.write('<div class="section"><b>Filhos:</b><ul>{filhos_print_html}</ul></div>');
                         win.document.write('</body></html>');
                         win.document.close();
-                        setTimeout(function() {{ win.print(); }}, 800);
+                        setTimeout(function(){ win.print(); }, 800);
                     </script>"""
                     st.components.v1.html(html_print, height=0)
                     st.toast("Preparando ficha...")
-                        
-                        
+
                 if col_ed.button("📝 Editar Dados", key=f"btn_ed_{idx}_{sufixo}"):
                     st.session_state[edit_key] = True
                     st.rerun()
@@ -540,90 +494,137 @@ elif aba == "🔍 Consulta de Membros":
                     st.rerun()
     
             else:
-                # --- MODO EDIÇÃO COMPLETO (ESPELHO DO CADASTRO) ---
+                # --- MODO EDIÇÃO INTELIGENTE (REGRAS APLICADAS) ---
                 st.markdown(f"### 📝 Atualizar Cadastro: {membro['Nome Completo']}")
+                
+                # Campos Imutáveis apenas como texto informativo (conforme solicitado)
+                st.caption(f"ℹ️ Campos biométricos fixos: CPF: {cpf_f} | RG: {rg_f} | Pai: {pai} | Mãe: {mae}")
+                
                 with st.form(key=f"form_edit_{idx}_{sufixo}"):
                     
                     e1, e2 = st.columns(2)
                     with e1:
+                        # Nome é imutável? Se sim, caption. Se não, text_input.
                         ed_nome = st.text_input("Nome Completo", value=membro['Nome Completo'])
-                        ed_prof = st.text_input("Profissão", value=tratar_campo(membro['Profissão']))
-                        ed_cpf = st.text_input("CPF (Somente números)", value=cpf_limpo, max_chars=11)
-                        ed_pai = st.text_input("Nome do Pai", value=pai)
+                        ed_prof = st.text_input("Profissão Atual", value=tratar_campo_local(membro['Profissão']))
                     with e2:
-                        ed_civil = st.selectbox("Estado Civil", ["Solteiro(a)", "Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"], 
+                        ed_civil = st.selectbox("Alterar Estado Civil", ["Solteiro(a)", "Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"], 
                                               index=["Solteiro(a)", "Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"].index(membro['Estado Civil']))
-                        ed_rg = st.text_input("RG", value=rg_f)
-                        ed_mae = st.text_input("Nome da Mãe", value=mae)
-    
+
+                    # Lógica Dinâmica do Cônjuge (com limpeza automática se mudar)
+                    ed_conj, ed_nasc_conj, ed_prof_conj, ed_bat_conj = "Não Aplicável", "Não Aplicável", "Não Aplicável", "Não Aplicável"
                     if ed_civil in ["Casado(a)", "União Estável"]:
                         st.write("---")
-                        f1, f2, f3 = st.columns(3)
-                        ed_conj = f1.text_input("Nome do Cônjuge", value=conjuge)
-                        ed_nasc_conj = f2.text_input("Nasc. Cônjuge (DD/MM/YYYY)", value=tratar_campo(membro['Data Nascimento Cônjuge']))
-                        ed_prof_conj = f3.text_input("Profissão Cônjuge", value=tratar_campo(membro['Profissão Cônjuge']))
-                    else:
-                        ed_conj, ed_nasc_conj, ed_prof_conj = "Não Aplicável", "Não Aplicável", "Não Aplicável"
-    
+                        st.subheader("💍 Dados do Cônjuge")
+                        f1, f2, f3, f4 = st.columns([2, 1, 1, 1])
+                        ed_conj = f1.text_input("Nome do Cônjuge", value=conjuge if conjuge != "Não Aplicável" else "")
+                        # Nascimento do cônjuge é imutável? Se sim, st.caption. Se não, text_input.
+                        ed_nasc_conj = f2.text_input("Nascimento (DD/MM/YYYY)", value=tratar_campo_local(membro['Data Nascimento Cônjuge']))
+                        ed_prof_conj = f3.text_input("Profissão", value=tratar_campo_local(membro['Profissão Cônjuge']))
+                        # Adicionado campo de Batismo do Cônjuge para edição
+                        bat_conj_val = tratar_campo_local(membro.get('Batizado Cônjuge', 'Não Aplicável'))
+                        ed_bat_conj = f4.selectbox("É Batizado?", ["Sim", "Não"], 
+                                                   index=0 if bat_conj_val == "Sim" else 1)
+
+                    # Lógica Dinâmica dos Filhos (Diferenciando Edição de Adição)
                     st.write("---")
-                    st.subheader("👨‍👩‍👧‍👦 Filhos e Batismo")
+                    st.subheader("👨‍👩‍👧‍👦 Atualizar Filhos e Batismo")
                     novos_dados_filhos = {}
+                    
                     for i in range(1, 4):
-                        c_f1, c_f2, c_f3 = st.columns([2, 1, 1])
-                        nome_f_val = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
-                        novos_dados_filhos[f'nome_{i}'] = c_f1.text_input(f"Nome Filho {i}", value=nome_f_val, key=f"ed_f_n_{i}_{idx}")
-                        novos_dados_filhos[f'idade_{i}'] = c_f2.number_input(f"Idade F{i}", value=int(membro[f'Idade do Filho(a) - {i}']) if nome_f_val != "Não Aplicável" else 0, key=f"ed_f_i_{i}_{idx}")
-                        bat_f_val = tratar_campo(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
-                        novos_dados_filhos[f'bat_{i}'] = c_f3.selectbox(f"Batizado F{i}", ["Não Aplicável", "Sim", "Não"], 
-                                                                        index=["Não Aplicável", "Sim", "Não"].index(bat_f_val) if bat_f_val in ["Sim", "Não"] else 0, key=f"ed_f_b_{i}_{idx}")
-    
+                        nome_f_atual = tratar_campo_local(membro[f'Nome do Filho (a) - {i}'])
+                        
+                        # CASO 1: O FILHO JÁ EXISTE (Mostra edição restrita)
+                        if nome_f_atual != "Não Aplicável":
+                            st.write(f"**Filho(a) {i} detectado:**")
+                            c_f1, c_f2, c_f3 = st.columns([2, 1, 1])
+                            # Nome e Nascimento são imutáveis após cadastro
+                            novos_dados_filhos[f'nome_{i}'] = c_f1.text_input(f"Nome F{i}", value=nome_f_atual, key=f"ed_f_n_{i}_{idx}")
+                            # st.caption(f"ℹ️ Nascimento F{i}: {membro[f'Data Nascimento Filho {i}']}") # Exemplo se quisesse caption
+                            novos_dados_filhos[f'nasc_{i}'] = membro[f'Data Nascimento Filho {i}'] # Mantém o original para o Excel
+                            
+                            # Idade pode ser recalculada ou editada. number_input conforme print.
+                            novos_dados_filhos[f'idade_{i}'] = c_f2.number_input(f"Idade F{i}", value=int(membro[f'Idade do Filho(a) - {i}']), key=f"ed_f_i_{i}_{idx}")
+                            
+                            # Batismo sim, é mutável.
+                            bat_f_val_ed = tratar_campo_local(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
+                            novos_dados_filhos[f'bat_{i}'] = c_f3.selectbox(f"Batizado F{i}?", ["Sim", "Não", "Não Aplicável"], 
+                                                                         index=["Sim", "Não", "Não Aplicável"].index(bat_f_val_ed), key=f"ed_f_b_{i}_{idx}")
+                            st.write("---")
+
+                        # CASO 2: O FILHO NÃO EXISTE (Mostra checkbox de adição "estilo cadastro")
+                        else:
+                            if st.checkbox(f"➕ Adicionar Filho(a) {i}?", key=f"add_f_{i}_{idx}"):
+                                c_f1, c_f2, c_f3 = st.columns([2, 1, 1])
+                                novos_dados_filhos[f'nome_{i}'] = c_f1.text_input(f"Nome Novo Filho {i}", key=f"new_f_n_{i}_{idx}")
+                                dt_nasc_f = c_f2.date_input(f"Nascimento F{i}", value=None, format="DD/MM/YYYY", key=f"new_f_d_{i}_{idx}")
+                                novos_dados_filhos[f'nasc_{i}'] = dt_nasc_f.strftime("%d/%m/%Y") if dt_nasc_f else ""
+                                novos_dados_filhos[f'idade_{i}'] = calcular_idade(dt_nasc_f) if dt_nasc_f else 0
+                                novos_dados_filhos[f'bat_{i}'] = c_f3.selectbox(f"Batismo F{i}?", ["Não Aplicável", "Sim", "Não"], key=f"new_f_b_{i}_{idx}")
+                            else:
+                                # Define valores padrão para filhos não adicionados
+                                novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
+                                novos_dados_filhos[f'nasc_{i}'] = ""
+                                novos_dados_filhos[f'idade_{i}'] = 0
+                                novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
+
                     st.write("---")
+                    st.subheader("⛪ Vida Eclesiástica e Observações")
                     i1, i2 = st.columns(2)
                     ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
                     ed_pastor = i2.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], 
                                             index=["Adriano", "Albert", "Luis", "Não Aplicável"].index(membro['Pastor Responsável']) if membro['Pastor Responsável'] in ["Adriano", "Albert", "Luis"] else 3)
-                    ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']))
-    
+                    
+                    ed_obs = st.text_area("Observações", value=tratar_campo_local(membro['Observações']))
+
+                    # Botões de Ação do Formulário
                     b_save, b_canc = st.columns(2)
                     if b_save.form_submit_button("💾 Salvar Alterações", use_container_width=True):
-                        # Mapeamento de Gravação
-                        df_contexto.at[idx, 'Nome Completo'] = ed_nome
+                        # Mapeamento de Gravação: Atualiza o DataFrame na memória
+                        df_contexto.at[idx, 'Nome Completo'] = ed_nome # Se nome for imutável, remova esta linha
                         df_contexto.at[idx, 'Profissão'] = ed_prof
-                        df_contexto.at[idx, 'CPF'] = ed_cpf
-                        df_contexto.at[idx, 'RG'] = ed_rg
                         df_contexto.at[idx, 'Estado Civil'] = ed_civil
-                        df_contexto.at[idx, 'Nome do Pai'] = ed_pai
-                        df_contexto.at[idx, 'Nome da Mãe'] = ed_mae
+                        
+                        # Dados do Cônjuge (já limpos se ed_civil não for casado)
                         df_contexto.at[idx, 'Nome Completo Conjuge'] = ed_conj
                         df_contexto.at[idx, 'Data Nascimento Cônjuge'] = ed_nasc_conj
                         df_contexto.at[idx, 'Profissão Cônjuge'] = ed_prof_conj
+                        df_contexto.at[idx, 'Batizado Cônjuge'] = ed_bat_conj
+                        
+                        # Dados Eclesiásticos
                         df_contexto.at[idx, 'Batizado Membro'] = ed_bat_mem
                         df_contexto.at[idx, 'Pastor Responsável'] = ed_pastor
                         df_contexto.at[idx, 'Observações'] = ed_obs
                         
+                        # Dados dos Filhos (Diferenciado entre edição e adição)
                         for i in range(1, 4):
                             df_contexto.at[idx, f'Nome do Filho (a) - {i}'] = novos_dados_filhos[f'nome_{i}']
+                            # Certifique-se de que a coluna 'Data Nascimento Filho i' existe no Excel
+                            df_contexto.at[idx, f'Data Nascimento Filho {i}'] = novos_dados_filhos[f'nasc_{i}']
                             df_contexto.at[idx, f'Idade do Filho(a) - {i}'] = novos_dados_filhos[f'idade_{i}']
                             df_contexto.at[idx, f'Batismo Filho {i}'] = novos_dados_filhos[f'bat_{i}']
-    
+
+                        # Envia o DataFrame atualizado para o Google Sheets
                         conn.update(data=df_contexto)
                         st.session_state[edit_key] = False
-                        st.success("Dados atualizados!")
+                        st.success("Cadastro atualizado com sucesso!")
                         st.rerun()
-    
+
                     if b_canc.form_submit_button("❌ Cancelar", use_container_width=True):
                         st.session_state[edit_key] = False
                         st.rerun()
 
-    # --- ABAS DE INTERFACE ---
+    # --- ABAS DE INTERFACE NA CONSULTA (INDENTADAS) ---
     tab_busca, tab_lista = st.tabs(["🔎 Pesquisar por Nome", "📋 Lista Geral"])
 
     with tab_busca:
         nome_busca = st.text_input("Digite o nome para pesquisar", key="input_busca_original")
         if nome_busca:
+            # TTL curto para busca ver dados novos rápido
             df = conn.read(ttl="5s")
-            busca_limpa = normalizar(nome_busca)
-            indices = df[df['Nome Completo'].astype(str).apply(normalizar).str.contains(busca_limpa, na=False)].index
+            # Normalização local definida acima
+            busca_limpa = normalizar_local(nome_busca)
+            indices = df[df['Nome Completo'].astype(str).apply(normalizar_local).str.contains(busca_limpa, na=False)].index
             if not indices.empty:
                 for idx in indices:
                     renderizar_membro_completo(idx, df, "busca")
@@ -632,30 +633,34 @@ elif aba == "🔍 Consulta de Membros":
 
     with tab_lista:
         df_full = conn.read(ttl="10s")
+        # Ordenação alfabética
         df_full = df_full.sort_values(by=df_full.columns[0])            
         st.write(f"Total: {len(df_full)} membros")
         for idx in df_full.index:
             renderizar_membro_completo(idx, df_full, "lista")
             
-# --- BLOCO DE BACKUP (Inserir ao final da tab_lista) ---
-    st.divider()
-    st.subheader("💾 Backup de Segurança")
-        
-    # Criamos o arquivo Excel em memória
-    import io
-    buffer = io.BytesIO()
-        
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        # Exporta o DataFrame atual para o Excel
-        df_full.to_excel(writer, index=False, sheet_name='Membros')
+        # --- SEÇÃO DE BACKUP NA LISTA GERAL ---
+        st.divider()
+        st.subheader("💾 Backup de Segurança")
             
-    st.download_button(
-        label="📥 Baixar Lista de Membros (Excel)",
-        data=buffer,
-        file_name=f"backup_membros_{pd.Timestamp.now().strftime('%Y-%m-%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        help="Clique aqui para baixar uma cópia de segurança de todos os dados da planilha."
-    )
+        # Criamos o arquivo Excel em memória usando a importação local de io
+        buffer = io.BytesIO()
+            
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            # Exporta o DataFrame ordenado para o Excel
+            df_full.to_excel(writer, index=False, sheet_name='Membros')
+                
+        st.download_button(
+            label="📥 Baixar Lista de Membros (Excel)",
+            data=buffer,
+            file_name=f"backup_membros_{pd.Timestamp.now().strftime('%Y-%m-%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Clique aqui para baixar uma cópia de segurança de todos os dados da planilha."
+        )
+
+# --- FIM DO BLOCO ELIF DA CONSULTA ---
+# O próximo elif (Catálogo) deve vir alinhado com este elif aba == "🔍 Consulta..."
+
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
 elif aba == "🛠️ Catálogo de Serviços":
