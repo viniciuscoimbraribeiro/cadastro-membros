@@ -546,24 +546,24 @@ elif aba == "🔍 Consulta de Membros":
             renderizar_membro_completo(idx, df_full, "lista")
             
 # --- BLOCO DE BACKUP (Inserir ao final da tab_lista) ---
-        st.divider()
-        st.subheader("💾 Backup de Segurança")
+    st.divider()
+    st.subheader("💾 Backup de Segurança")
         
-        # Criamos o arquivo Excel em memória
-        import io
-        buffer = io.BytesIO()
+    # Criamos o arquivo Excel em memória
+    import io
+    buffer = io.BytesIO()
         
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            # Exporta o DataFrame atual para o Excel
-            df_full.to_excel(writer, index=False, sheet_name='Membros')
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        # Exporta o DataFrame atual para o Excel
+        df_full.to_excel(writer, index=False, sheet_name='Membros')
             
-        st.download_button(
-            label="📥 Baixar Lista de Membros (Excel)",
-            data=buffer,
-            file_name=f"backup_membros_{pd.Timestamp.now().strftime('%Y-%m-%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Clique aqui para baixar uma cópia de segurança de todos os dados da planilha."
-        )
+    st.download_button(
+        label="📥 Baixar Lista de Membros (Excel)",
+        data=buffer,
+        file_name=f"backup_membros_{pd.Timestamp.now().strftime('%Y-%m-%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        help="Clique aqui para baixar uma cópia de segurança de todos os dados da planilha."
+    )
             
 # --- ABA 3: CATÁLOGO DE SERVIÇOS (Aqui entra o Filtro de Profissionais) ---
 elif aba == "🛠️ Catálogo de Serviços":
