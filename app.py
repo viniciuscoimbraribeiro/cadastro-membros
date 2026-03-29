@@ -662,12 +662,15 @@ elif aba == "🛠️ Catálogo de Serviços":
     st.header("🛠️ Catálogo de Serviços e Profissões")
     st.write("Pesquise por profissionais dentro da nossa comunidade.")
     
-    prof_busca = st.text_input("O que você procura? (Ex: Pedreiro, Advogado, Calheiro, Encandor, etc...)")
+    prof_busca = st.text_input("O que você procura? (Ex: Pedreiro, Advogado, Calheiro, Encanador, etc...)")
     
     if st.button("🔎 Filtrar Profissionais", key="btn_filtro_catalogo", use_container_width=True):
         if prof_busca:
+            # Lendo os dados atualizados
             df = conn.read(ttl="10s")
+            
             # Filtra pela Profissão (Coluna 3)
+            # Usamos .iloc[:, 3] para garantir que pegamos a coluna correta da planilha
             encontrados = df[df.iloc[:, 3].astype(str).str.contains(prof_busca, case=False, na=False)]
             
             if not encontrados.empty:
@@ -680,7 +683,7 @@ elif aba == "🛠️ Catálogo de Serviços":
                         st.divider()
             else:
                 st.warning(f"Ainda não temos '{prof_busca}' cadastrado.")
-    else:
+        else:
             st.warning("Por favor, digite uma profissão para buscar.")
             
 elif aba == "📊 Estatísticas":
