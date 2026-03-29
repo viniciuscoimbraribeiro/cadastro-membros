@@ -470,15 +470,52 @@ elif aba == "🔍 Consulta de Membros":
                     html_print = f"""
                     <script>
                         var win = window.open('', '_blank');
-                        win.document.write('<html><head><title>Ficha - {membro['Nome Completo']}</title>');
-                        win.document.write('<style>body{{font-family:Arial;padding:40px;}} .section{{margin:20px 0;padding:10px;border-left:5px solid #2c3e50;background:#f9f9f9;}}</style></head><body>');
-                        win.document.write('<h2>FICHA CADASTRAL</h2>');
-                        win.document.write('<div class="section"><b>Nome:</b> {membro['Nome Completo']}<br><b>CPF:</b> {cpf_f}</div>');
-                        win.document.write('<div class="section"><b>Pai:</b> {pai}<br><b>Mãe:</b> {mae}<br><b>Cônjuge:</b> {conjuge}</div>');
-                        win.document.write('<div class="section"><b>Filhos:</b><ul>{filhos_print_html}</ul></div>');
+                        win.document.write('<html><head><title>Ficha de Membro - {membro['Nome Completo']}</title>');
+                        win.document.write('<style>');
+                        win.document.write('body {{ font-family: Arial, sans-serif; padding: 40px; color: #333; }}');
+                        win.document.write('h2 {{ text-align: center; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }}');
+                        win.document.write('.section {{ margin-top: 20px; border: 1px solid #eee; padding: 15px; border-left: 5px solid #2c3e50; background: #f9f9f9; }}');
+                        win.document.write('.section-title {{ font-weight: bold; font-size: 1.1em; text-decoration: underline; margin-bottom: 10px; display: block; }}');
+                        win.document.write('.grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}');
+                        win.document.write('</style></head><body>');
+                            
+                        win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
+                            
+                            // SEÇÃO 1: DADOS PESSOAIS
+                        win.document.write('<div class="section"><span class="section-title">I. DADOS PESSOAIS</span>');
+                        win.document.write('<div class="grid">');
+                        win.document.write('<div><b>Nome:</b> {membro['Nome Completo']}</div>');
+                         win.document.write('<div><b>Data de Nasc.:</b> {membro['Data Nascimento']}</div>');
+                        win.document.write('<div><b>CPF:</b> {cpf_f}</div>');
+                        win.document.write('<div><b>RG:</b> {rg_f}</div>');
+                        win.document.write('<div><b>Profissão:</b> {membro['Profissão']}</div>');
+                        win.document.write('<div><b>Estado Civil:</b> {membro['Estado Civil']}</div>');
+                        win.document.write('</div></div>');
+                            
+                            // SEÇÃO 2: FAMÍLIA
+                        win.document.write('<div class="section"><span class="section-title">II. FAMÍLIA E FILHOS</span>');
+                        win.document.write('<b>Cônjuge:</b> {conjuge}<br>');
+                        if ("{conjuge}" != "Não Aplicável") {{win.document.write('<b>Profissão Cônjuge:</b> {tratar_campo(membro['Profissão Cônjuge'])}<br>');}}
+                        win.document.write('<b>Pai:</b> {tratar_campo(membro['Nome do Pai'])}<br>');
+                        win.document.write('<b>Mãe:</b> {tratar_campo(membro['Nome da Mãe'])}<br>');
+                        win.document.write('<b>Filhos:</b><ul>{filhos_html}</ul>');
+                        win.document.write('</div>');
+                            
+                            // SEÇÃO 3: ECLESIÁSTICO
+                        win.document.write('<div class="section"><span class="section-title">III. DADOS ECLESIÁSTICOS</span>');
+                        win.document.write('<div class="grid">');
+                        win.document.write('<div><b>Batizado:</b> {membro['Batizado Membro']}</div>');
+                        win.document.write('<div><b>Pastor Responsável:</b> {membro['Pastor Responsável']}</div>');
+                        win.document.write('</div>');
+                        win.document.write('<p><b>Observações:</b> {tratar_campo(membro['Observações'])}</p>');
+                        win.document.write('</div>');
+                            
+                        win.document.write('<p style="text-align:center; font-size: 0.8em; margin-top: 50px;">Gerado em: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}</p>');
+                            
+    
                         win.document.write('</body></html>');
                         win.document.close();
-                        setTimeout(function(){ win.print(); }, 800);
+                        setTimeout(function() {{ win.print(); }}, 800);
                     </script>"""
                     st.components.v1.html(html_print, height=0)
                     st.toast("Preparando ficha...")
