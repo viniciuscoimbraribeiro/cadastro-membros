@@ -680,7 +680,9 @@ elif aba == "🛠️ Catálogo de Serviços":
                         st.divider()
             else:
                 st.warning(f"Ainda não temos '{prof_busca}' cadastrado.")
-
+    else:
+            st.warning("Por favor, digite uma profissão para buscar.")
+            
 elif aba == "📊 Estatísticas":
         st.header("📊 Painel Estatístico de Membros")
         st.write("Análise demográfica e espiritual consolidada da congregação.")
