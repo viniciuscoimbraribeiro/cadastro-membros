@@ -341,13 +341,25 @@ if aba == "📝 Novo Cadastro":
                 st.error(f"Erro: {e}")
                 pass 
 elif aba == "🔍 Consulta de Membros":
-    # 1. Inicializar o estado de autenticação
+    # --- NOVO: LOGICA DE RESET DE SEGURANÇA ---
+    # Se a aba anterior era outra, resetamos a senha para garantir o bloqueio inicial
+    if "ultima_aba" not in st.session_state:
+        st.session_state.ultima_aba = aba
+    
+    if st.session_state.ultima_aba != aba:
+        st.session_state.autenticado_consulta = False
+        st.session_state.ultima_aba = aba
+
+    # 1. Inicializar o estado de autenticação se não existir
     if "autenticado_consulta" not in st.session_state:
         st.session_state.autenticado_consulta = False
 
+    # 2. VERIFICAÇÃO DO BLOQUEIO (GATE)
     if not st.session_state.autenticado_consulta:
-        # Mostra apenas a tela de senha
+        st.header("🔐 Acesso Restrito")
+        # Interface limpa conforme image_a705c5.png
         senha_acesso = st.text_input("Digite a senha para acessar a consulta", type="password", key="senha_admin_definitiva")
+        
         if senha_acesso == "1234":
             st.session_state.autenticado_consulta = True
             st.rerun()
@@ -356,27 +368,32 @@ elif aba == "🔍 Consulta de Membros":
         else:
             st.info("Aguardando senha para liberar o painel...")
         
-        # PARA O SCRIPT AQUI. Nada abaixo será lido se não houver senha.
+        # O st.stop() aqui impede que as abas de pesquisa/lista (image_a705c5.png) apareçam
         st.stop() 
 
-    # --- SE CHEGOU AQUI, ESTÁ AUTENTICADO ---
+    # --- 3. SE CHEGOU AQUI, ESTÁ AUTENTICADO ---
+    # Botão de bloqueio manual (conforme solicitado)
     if st.button("🔒 Bloquear Acesso"):
         st.session_state.autenticado_consulta = False
         st.rerun()
         
     st.header("🔍 Consultar e Gerenciar Membros")
 
+    # Re-importar para garantir que as funções funcionem neste escopo
     import unicodedata
     import re
 
-    # --- FUNÇÃO AUXILIAR: Normalização ---
     def normalizar(texto):
         return "".join(c for c in unicodedata.normalize('NFD', str(texto))
                        if unicodedata.category(c) != 'Mn').lower().strip()
 
     def tratar_campo(valor):
-        if not valor or str(valor).lower() in ["nan", "none", "", "não aplicável"]: return "Não Aplicável"
+        if not valor or str(valor).lower() in ["nan", "none", "", "não aplicável"]: 
+            return "Não Aplicável"
         return valor
+
+    # --- O RESTANTE DO SEU SCRIPT DE RENDERIZAÇÃO E ABAS SEGUE AQUI ---
+    # (Mantenha a função renderizar_membro_completo e as st.tabs abaixo deste bloco)
 
     # --- FUNÇÃO MESTRE: SEU CÓDIGO ORIGINAL INTEGRAL COM SUFIXO ---
     def renderizar_membro_completo(idx, df_contexto, sufixo):
