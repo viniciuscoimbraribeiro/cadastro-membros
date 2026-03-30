@@ -597,8 +597,8 @@ elif aba == "🔍 Consulta de Membros":
                                 ci1, ci2, ci3 = st.columns([2.5, 1.2, 1.3])
                                 
                                 ed_f_nome = ci1.text_input(f"Nome Filho {i}", placeholder="Nome...", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                
+                                #ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=None, key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed", format="DD/MM/YYYY")                                
                                 # Cálculo de idade
                                 idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
                                 
