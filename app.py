@@ -531,8 +531,8 @@ elif aba == "🔍 Consulta de Membros":
                 st.markdown(f"### 📝 Atualizar Cadastro: {membro['Nome Completo']}")
                 st.caption("⚠️ Dados de Filiação, RG e CPF são imutáveis.")
 
-                ed_nome = e1.text_input("Nome Completo", value=membro['Nome Completo'], key=f"ed_nome_{idx}")
                 # 1. ESTADO CIVIL (Fora do formulário para reatividade)
+# 1. ESTADO CIVIL (Fora do formulário para reatividade)
                 opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"]
                 estado_atual = membro['Estado Civil']
                 if estado_atual not in opcoes_civis: opcoes_civis.insert(0, estado_atual)
