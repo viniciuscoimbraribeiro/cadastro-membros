@@ -532,7 +532,6 @@ elif aba == "🔍 Consulta de Membros":
                 st.caption("⚠️ Dados de Filiação, RG e CPF são imutáveis.")
 
                 # 1. ESTADO CIVIL (Fora do formulário para reatividade)
-# 1. ESTADO CIVIL (Fora do formulário para reatividade)
                 opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"]
                 estado_atual = membro['Estado Civil']
                 if estado_atual not in opcoes_civis: opcoes_civis.insert(0, estado_atual)
@@ -590,22 +589,46 @@ elif aba == "🔍 Consulta de Membros":
                         
                         else:
                             # SLOT VAZIO - Agora o checkbox funciona na hora!
+else:
+                            # --- SLOT VAZIO (Adicionar Novo Filho) ---
+                            # Checkbox para ativar o slot
                             add_filho = c1.checkbox(f"➕ Adicionar Filho {i}", key=f"check_add_{i}_{idx}_{sufixo}")
+                            
                             if add_filho:
-                                ed_f_nome = c1.text_input(f"Nome Filho {i}", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                ed_f_nasc = c2.date_input(f"Nasc.", value=date(2015, 1, 1), key=f"d_f_{i}_{idx}_{sufixo}")
-                                idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
-                                
-                                if idade_nova < 18:
-                                    c3.info(f"{idade_nova} anos")
-                                    ed_f_bat = "Não Aplicável"
-                                else:
-                                    ed_f_bat = c3.selectbox("Batizado?", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                
-                                novos_dados_filhos[f'nome_{i}'] = ed_f_nome
-                                novos_dados_filhos[f'idade_{i}'] = idade_nova
-                                novos_dados_filhos[f'bat_{i}'] = ed_f_bat
+                                # Container para garantir que os inputs fiquem alinhados
+                                with st.container():
+                                    col_n, col_d, col_b = st.columns([2.5, 1.2, 1.3])
+                                    
+                                    # Nome do novo filho
+                                    ed_f_nome = col_n.text_input(f"Nome Filho {i}", 
+                                                                placeholder="Digite o nome...",
+                                                                key=f"n_f_{i}_{idx}_{sufixo}", 
+                                                                label_visibility="collapsed")
+                                    
+                                    # Data de Nascimento (Inicia com a data de hoje para não vir valor fixo antigo)
+                                    ed_f_nasc = col_d.date_input("Nasc.", 
+                                                                value=date.today(), 
+                                                                key=f"d_f_{i}_{idx}_{sufixo}",
+                                                                label_visibility="collapsed")
+                                    
+                                    # Cálculo de idade reativo
+                                    idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
+                                    
+                                    # Lógica do Batismo baseada na data selecionada
+                                    if idade_nova < 18:
+                                        col_b.info(f"👶 {idade_nova} anos")
+                                        ed_f_bat = "Não Aplicável"
+                                    else:
+                                        ed_f_bat = col_b.selectbox("Batizado?", ["Sim", "Não"], 
+                                                                  key=f"b_f_{i}_{idx}_{sufixo}", 
+                                                                  label_visibility="collapsed")
+                                    
+                                    # Salva no dicionário temporário
+                                    novos_dados_filhos[f'nome_{i}'] = ed_f_nome
+                                    novos_dados_filhos[f'idade_{i}'] = idade_nova
+                                    novos_dados_filhos[f'bat_{i}'] = ed_f_bat
                             else:
+                                # Se o checkbox não estiver marcado, mantém como Não Aplicável
                                 novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
                                 novos_dados_filhos[f'idade_{i}'] = 0
                                 novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
