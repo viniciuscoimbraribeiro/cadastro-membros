@@ -392,11 +392,7 @@ elif aba == "🔍 Consulta de Membros":
             return "Não Aplicável"
         return valor
 
-    # --- O RESTANTE DO SEU SCRIPT DE RENDERIZAÇÃO E ABAS SEGUE AQUI ---
-    # (Mantenha a função renderizar_membro_completo e as st.tabs abaixo deste bloco)
 
-    # --- FUNÇÃO MESTRE: SEU CÓDIGO ORIGINAL INTEGRAL COM SUFIXO ---
-# --- FUNÇÃO MESTRE ATUALIZADA ---
     def renderizar_membro_completo(idx, df_contexto, sufixo):
         membro = df_contexto.loc[idx]
         nome_exibicao = str(membro['Nome Completo']).upper()
@@ -536,55 +532,46 @@ elif aba == "🔍 Consulta de Membros":
                 st.caption("⚠️ Dados de Filiação, RG e CPF são imutáveis.")
 
                 # 1. ESTADO CIVIL (Fora do formulário para garantir reatividade imediata)
+# 1. ESTADO CIVIL (Fora do formulário para reatividade)
                 opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"]
                 estado_atual = membro['Estado Civil']
                 if estado_atual not in opcoes_civis: opcoes_civis.insert(0, estado_atual)
                 
-                # Chave única para persistência
                 ed_civil = st.selectbox("Estado Civil", opcoes_civis, 
                                         index=opcoes_civis.index(estado_atual), 
                                         key=f"rel_civil_{idx}_{sufixo}")
 
-                # Agora iniciamos o formulário para os demais dados
-                with st.form(key=f"form_edit_principal_{idx}_{sufixo}"):
+                # --- PRIMEIRO FORMULÁRIO (DADOS BÁSICOS E CÔNJUGE) ---
+                with st.container(): # Usamos container em vez de form para permitir reatividade
                     e1, e2 = st.columns(2)
-                    with e1:
-                        ed_nome = st.text_input("Nome Completo", value=membro['Nome Completo'])
-                        ed_prof = st.text_input("Profissão", value=tratar_campo(membro['Profissão']))
-                    with e2:
-                        st.info(f"Estado Civil selecionado: {ed_civil}")
+                    ed_nome = e1.text_input("Nome Completo", value=membro['Nome Completo'], key=f"ed_nome_{idx}")
+                    ed_prof = e2.text_input("Profissão", value=tratar_campo(membro['Profissão']), key=f"ed_prof_{idx}")
 
-                    # Fluxo de Cônjuge (Reativo ao ed_civil)
                     if ed_civil in ["Casado(a)", "União Estável"]:
                         st.write("---")
                         st.subheader("💍 Dados do Cônjuge")
                         f1, f2 = st.columns(2)
                         f3, f4 = st.columns(2)
-                        ed_conj = f1.text_input("Nome do Cônjuge", value=conjuge)
-                        ed_nasc_conj = f2.text_input("Nasc. Cônjuge (DD/MM/YYYY)", value=tratar_campo(membro['Data Nascimento Cônjuge']))
-                        ed_prof_conj = f3.text_input("Profissão Cônjuge", value=tratar_campo(membro['Profissão Cônjuge']))
-                        # Novo campo solicitado
+                        ed_conj = f1.text_input("Nome do Cônjuge", value=conjuge, key=f"ed_conj_{idx}")
+                        ed_nasc_conj = f2.text_input("Nasc. Cônjuge (DD/MM/YYYY)", value=tratar_campo(membro['Data Nascimento Cônjuge']), key=f"ed_nasc_conj_{idx}")
+                        ed_prof_conj = f3.text_input("Profissão Cônjuge", value=tratar_campo(membro['Profissão Cônjuge']), key=f"ed_prof_c_{idx}")
                         bat_conj_val = tratar_campo(membro.get('Cônjuge é Batizado?', "Não"))
                         ed_bat_conj = f4.selectbox("Cônjuge é Batizado?", ["Sim", "Não"], 
-                                                   index=0 if bat_conj_val == "Sim" else 1)
+                                                   index=0 if bat_conj_val == "Sim" else 1, key=f"ed_bat_c_{idx}")
                     else:
                         ed_conj, ed_nasc_conj, ed_prof_conj, ed_bat_conj = "Não Aplicável", "Não Aplicável", "Não Aplicável", "Não Aplicável"
 
+                    # --- GESTÃO DE FILHOS (FORA DO FORM PARA FUNCIONAR O CHECKBOX) ---
                     st.write("---")
                     st.subheader("👨‍👩‍👧‍👦 Gestão de Filhos")
-                    
                     novos_dados_filhos = {}
                     from datetime import date
 
                     for i in range(1, 4):
                         nome_f_orig = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
-                        
-                        # Colunas com proporções específicas para eliminar o gap
-                        # [Nome/Input, Legenda/Idade, Batismo]
                         c1, c2, c3 = st.columns([2.5, 1, 1.5])
 
                         if nome_f_orig != "Não Aplicável":
-                            # FILHO EXISTENTE
                             c1.markdown(f"**{i}. {nome_f_orig}**")
                             idade_f = int(membro[f'Idade do Filho(a) - {i}'])
                             c2.markdown(f" {idade_f} anos")
@@ -595,29 +582,25 @@ elif aba == "🔍 Consulta de Membros":
                             else:
                                 bat_f_val = tratar_campo(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
                                 novos_dados_filhos[f'bat_{i}'] = c3.selectbox(f"Batizado?", ["Sim", "Não"], 
-                                                                             index=0 if bat_f_val == "Sim" else 1, 
-                                                                             key=f"bat_old_{i}_{idx}", label_visibility="collapsed")
+                                    index=0 if bat_f_val == "Sim" else 1, 
+                                    key=f"bat_old_{i}_{idx}_{sufixo}", label_visibility="collapsed")
                             
                             novos_dados_filhos[f'nome_{i}'] = nome_f_orig
                             novos_dados_filhos[f'idade_{i}'] = idade_f
                         
                         else:
-                            # SLOT VAZIO (Adicionar Filho)
-                            # Nota: O Checkbox dentro do form não dispara rerun. 
-                            # Para UX perfeita, ele deve ser marcado e o usuário preencher.
-                            add_filho = c1.checkbox(f"➕ Adicionar Filho {i}", key=f"check_add_{i}_{idx}")
+                            # SLOT VAZIO - Agora o checkbox funciona na hora!
+                            add_filho = c1.checkbox(f"➕ Adicionar Filho {i}", key=f"check_add_{i}_{idx}_{sufixo}")
                             if add_filho:
-                                ed_f_nome = c1.text_input(f"Nome do Filho {i}", key=f"n_f_{i}_{idx}", label_visibility="collapsed")
-                                ed_f_nasc = c2.date_input(f"Nasc.", value=date(2015, 1, 1), key=f"d_f_{i}_{idx}")
-                                
-                                # Cálculo de idade
+                                ed_f_nome = c1.text_input(f"Nome Filho {i}", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                ed_f_nasc = c2.date_input(f"Nasc.", value=date(2015, 1, 1), key=f"d_f_{i}_{idx}_{sufixo}")
                                 idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
                                 
                                 if idade_nova < 18:
-                                    c3.info("Menor de 18")
+                                    c3.info(f"{idade_nova} anos")
                                     ed_f_bat = "Não Aplicável"
                                 else:
-                                    ed_f_bat = c3.selectbox("Batizado?", ["Sim", "Não"], key=f"b_f_{i}_{idx}", label_visibility="collapsed")
+                                    ed_f_bat = c3.selectbox("Batizado?", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
                                 
                                 novos_dados_filhos[f'nome_{i}'] = ed_f_nome
                                 novos_dados_filhos[f'idade_{i}'] = idade_nova
@@ -627,8 +610,9 @@ elif aba == "🔍 Consulta de Membros":
                                 novos_dados_filhos[f'idade_{i}'] = 0
                                 novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
 
+                # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
+                with st.form(key=f"form_final_save_{idx}_{sufixo}"):
                     st.write("---")
-                    # ... (Restante dos campos: Batizado Membro, Pastor, Obs) ...
                     i1, i2 = st.columns(2)
                     ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
                     ed_pastor = i2.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], 
@@ -637,28 +621,26 @@ elif aba == "🔍 Consulta de Membros":
 
                     b_save, b_canc = st.columns(2)
                     if b_save.form_submit_button("💾 Salvar Alterações", use_container_width=True):
-                        # 1. Atualizar campos básicos
+                        # Lógica de salvamento igual a sua...
                         df_contexto.at[idx, 'Nome Completo'] = ed_nome
                         df_contexto.at[idx, 'Profissão'] = ed_prof
                         df_contexto.at[idx, 'Estado Civil'] = ed_civil
                         df_contexto.at[idx, 'Batizado Membro'] = ed_bat_mem
                         df_contexto.at[idx, 'Pastor Responsável'] = ed_pastor
                         df_contexto.at[idx, 'Observações'] = ed_obs
-                        
-                        # 2. Lógica de Cônjuge (Limpeza automática se não for casado)
                         df_contexto.at[idx, 'Nome Completo Conjuge'] = ed_conj
                         df_contexto.at[idx, 'Data Nascimento Cônjuge'] = ed_nasc_conj
                         df_contexto.at[idx, 'Profissão Cônjuge'] = ed_prof_conj
+                        df_contexto.at[idx, 'Cônjuge é Batizado?'] = ed_bat_conj
                         
-                        # 3. Atualizar Filhos
                         for i in range(1, 4):
                             df_contexto.at[idx, f'Nome do Filho (a) - {i}'] = novos_dados_filhos[f'nome_{i}']
                             df_contexto.at[idx, f'Idade do Filho(a) - {i}'] = novos_dados_filhos[f'idade_{i}']
                             df_contexto.at[idx, f'Batismo Filho {i}'] = novos_dados_filhos[f'bat_{i}']
-    
+
                         conn.update(data=df_contexto)
                         st.session_state[edit_key] = False
-                        st.success("Dados atualizados com segurança!")
+                        st.success("Dados atualizados com sucesso!")
                         st.rerun()
 
                     if b_canc.form_submit_button("❌ Cancelar", use_container_width=True):
