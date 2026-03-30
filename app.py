@@ -531,15 +531,12 @@ elif aba == "🔍 Consulta de Membros":
                 st.markdown(f"### 📝 Atualizar Cadastro: {membro['Nome Completo']}")
                 st.caption("⚠️ Dados de Filiação, RG e CPF são imutáveis.")
 
-                # 1. ORGANIZAÇÃO: NOME, PROFISSÃO E ESTADO CIVIL
+                # 1. BLOCO PRINCIPAL (Identidade)
                 with st.container():
-                    # Linha 1: Nome e Profissão lado a lado
                     col_n, col_p = st.columns(2)
-                    # ADICIONADO _{sufixo} na key para evitar o erro de duplicata
                     ed_nome = col_n.text_input("Nome Completo", value=membro['Nome Completo'], key=f"ed_nome_{idx}_{sufixo}")
                     ed_prof = col_p.text_input("Profissão", value=tratar_campo(membro['Profissão']), key=f"ed_prof_{idx}_{sufixo}")
 
-                    # Linha 2: Estado Civil
                     opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)", "Solteiro(a)"]
                     estado_atual = membro['Estado Civil']
                     if estado_atual not in opcoes_civis: 
@@ -549,20 +546,22 @@ elif aba == "🔍 Consulta de Membros":
                                             index=opcoes_civis.index(estado_atual), 
                                             key=f"rel_civil_{idx}_{sufixo}")
 
-                # --- 2. FLUXO REATIVO DO CÔNJUGE ---
+                # 2. BLOCO DO CÔNJUGE (Dinâmico)
+                # Criamos um container fixo para ele não flutuar sobre outros elementos
+                espaco_conjuge = st.container()
                 if ed_civil in ["Casado(a)", "União Estável"]:
-                    st.write("---")
-                    st.subheader("💍 Dados do Cônjuge")
-                    f1, f2 = st.columns(2)
-                    f3, f4 = st.columns(2)
-                    # Certifique-se de que as keys abaixo também tenham _{sufixo} se der erro nelas
-                    ed_conj = f1.text_input("Nome do Cônjuge", value=conjuge, key=f"ed_conj_{idx}_{sufixo}")
-                    ed_nasc_conj = f2.text_input("Nasc. Cônjuge (DD/MM/YYYY)", value=tratar_campo(membro['Data Nascimento Cônjuge']), key=f"ed_nasc_conj_{idx}_{sufixo}")
-                    ed_prof_conj = f3.text_input("Profissão Cônjuge", value=tratar_campo(membro['Profissão Cônjuge']), key=f"ed_prof_c_{idx}_{sufixo}")
-                    
-                    bat_conj_val = tratar_campo(membro.get('Cônjuge é Batizado?', "Não"))
-                    ed_bat_conj = f4.selectbox("Cônjuge é Batizado?", ["Sim", "Não"], 
-                                               index=0 if bat_conj_val == "Sim" else 1, key=f"ed_bat_c_{idx}_{sufixo}")
+                    with espaco_conjuge:
+                        st.write("---")
+                        st.subheader("💍 Dados do Cônjuge")
+                        f1, f2 = st.columns(2)
+                        f3, f4 = st.columns(2)
+                        ed_conj = f1.text_input("Nome do Cônjuge", value=conjuge, key=f"ed_conj_{idx}_{sufixo}")
+                        ed_nasc_conj = f2.text_input("Nasc. Cônjuge (DD/MM/YYYY)", value=tratar_campo(membro['Data Nascimento Cônjuge']), key=f"ed_nasc_conj_{idx}_{sufixo}")
+                        ed_prof_conj = f3.text_input("Profissão Cônjuge", value=tratar_campo(membro['Profissão Cônjuge']), key=f"ed_prof_c_{idx}_{sufixo}")
+                        
+                        bat_conj_val = tratar_campo(membro.get('Cônjuge é Batizado?', "Não"))
+                        ed_bat_conj = f4.selectbox("Cônjuge é Batizado?", ["Sim", "Não"], 
+                                                   index=0 if bat_conj_val == "Sim" else 1, key=f"ed_bat_c_{idx}_{sufixo}")
                 else:
                     ed_conj, ed_nasc_conj, ed_prof_conj, ed_bat_conj = "Não Aplicável", "Não Aplicável", "Não Aplicável", "Não Aplicável"
                     
