@@ -566,7 +566,7 @@ elif aba == "🔍 Consulta de Membros":
                     novos_dados_filhos = {}
                     from datetime import date
 
-for i in range(1, 4):
+                    for i in range(1, 4):
                         nome_f_orig = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
                         c1, c2, c3 = st.columns([2.5, 1, 1.5])
 
