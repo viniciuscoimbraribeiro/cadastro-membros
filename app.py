@@ -597,26 +597,26 @@ elif aba == "🔍 Consulta de Membros":
                                 ci1, ci2, ci3 = st.columns([2.5, 1.2, 1.3])
                                 
                                 ed_f_nome = ci1.text_input(f"Nome Filho {i}", placeholder="Nome...", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                #ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
                                 ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=None, key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed", format="DD/MM/YYYY")                                
-                                # Cálculo de idade
-                                idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
-                                
-                                if idade_nova < 18:
-                                    ci3.info(f"👶 {idade_nova} anos")
-                                    ed_f_bat = "Não Aplicável"
-                                else:
-                                    ed_f_bat = ci3.selectbox(f"Bat.{i}", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                
-                                novos_dados_filhos[f'nome_{i}'] = ed_f_nome
-                                novos_dados_filhos[f'idade_{i}'] = idade_nova
-                                novos_dados_filhos[f'bat_{i}'] = ed_f_bat
-                            else:
-                                # Esta é a parte que causou o erro: agora ela tem conteúdo!
-                                novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
-                                novos_dados_filhos[f'idade_{i}'] = 0
-                                novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
-                                
+                                    # --- AJUSTE AQUI: Só calcula se ed_f_nasc não for None ---
+                                    if ed_f_nasc is not None:
+                                        idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
+                                        
+                                        if idade_nova < 18:
+                                            ci3.info(f"👶 {idade_nova} anos")
+                                            ed_f_bat = "Não Aplicável"
+                                        else:
+                                            ed_f_bat = ci3.selectbox(f"Bat.{i}", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                            
+                                        novos_dados_filhos[f'nome_{i}'] = ed_f_nome
+                                        novos_dados_filhos[f'idade_{i}'] = idade_nova
+                                        novos_dados_filhos[f'bat_{i}'] = ed_f_bat
+                                    else:
+                                        # Enquanto estiver vazio
+                                        ci3.warning("Escolha a data")
+                                        novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
+                                        novos_dados_filhos[f'idade_{i}'] = 0
+                                        novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"                                
 
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
