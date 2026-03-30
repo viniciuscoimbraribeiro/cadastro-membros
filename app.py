@@ -527,18 +527,33 @@ elif aba == "🔍 Consulta de Membros":
                     st.rerun()
 
             else:
-                # --- MODO EDIÇÃO (COM REGRAS DE SEGURANÇA E REATIVIDADE) ---
+                # --- MODO EDIÇÃO ---
                 st.markdown(f"### 📝 Atualizar Cadastro: {membro['Nome Completo']}")
                 st.caption("⚠️ Dados de Filiação, RG e CPF são imutáveis.")
 
-                # 1. ESTADO CIVIL (Fora do formulário para reatividade)
-                opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)"]
-                estado_atual = membro['Estado Civil']
-                if estado_atual not in opcoes_civis: opcoes_civis.insert(0, estado_atual)
-                
-                ed_civil = st.selectbox("Estado Civil", opcoes_civis, 
-                                        index=opcoes_civis.index(estado_atual), 
-                                        key=f"rel_civil_{idx}_{sufixo}")
+                # --- 1. DADOS PESSOAIS E ESTADO CIVIL (Ajuste de Ordem) ---
+                with st.container():
+                    # Primeira Linha: Nome e Profissão
+                    c1, c2 = st.columns(2)
+                    ed_nome = c1.text_input("Nome Completo", value=membro['Nome Completo'], key=f"ed_nome_{idx}")
+                    ed_prof = c2.text_input("Profissão", value=tratar_campo(membro['Profissão']), key=f"ed_prof_{idx}")
+
+                    # Segunda Linha: Estado Civil (Posicionado logo abaixo)
+                    opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)", "Solteiro(a)"]
+                    estado_atual = membro['Estado Civil']
+                    
+                    # Garante que o valor vindo do banco esteja na lista
+                    if estado_atual not in opcoes_civis: 
+                        opcoes_civis.insert(0, estado_atual)
+                    
+                    ed_civil = st.selectbox("Estado Civil", opcoes_civis, 
+                                            index=opcoes_civis.index(estado_atual), 
+                                            key=f"rel_civil_{idx}_{sufixo}")
+
+                    # --- 2. FLUXO DE CÔNJUGE (Aparece se for Casado ou União Estável) ---
+                    if ed_civil in ["Casado(a)", "União Estável"]:
+                        st.write("---")
+                        st.subheader("💍 Dados do Cônjuge")
 
                 # --- PRIMEIRO FORMULÁRIO (DADOS BÁSICOS E CÔNJUGE) ---
                 with st.container(): # Usamos container em vez de form para permitir reatividade
