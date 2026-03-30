@@ -566,11 +566,12 @@ elif aba == "🔍 Consulta de Membros":
                     novos_dados_filhos = {}
                     from datetime import date
 
-                    for i in range(1, 4):
+for i in range(1, 4):
                         nome_f_orig = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
                         c1, c2, c3 = st.columns([2.5, 1, 1.5])
 
                         if nome_f_orig != "Não Aplicável":
+                            # --- FILHO JÁ EXISTENTE ---
                             c1.markdown(f"**{i}. {nome_f_orig}**")
                             idade_f = int(membro[f'Idade do Filho(a) - {i}'])
                             c2.markdown(f" {idade_f} anos")
@@ -588,50 +589,34 @@ elif aba == "🔍 Consulta de Membros":
                             novos_dados_filhos[f'idade_{i}'] = idade_f
                         
                         else:
-                            # SLOT VAZIO - Agora o checkbox funciona na hora!
-else:
-                            # --- SLOT VAZIO (Adicionar Novo Filho) ---
-                            # Checkbox para ativar o slot
+                            # --- SLOT VAZIO (ADICIONAR NOVO) ---
                             add_filho = c1.checkbox(f"➕ Adicionar Filho {i}", key=f"check_add_{i}_{idx}_{sufixo}")
                             
                             if add_filho:
-                                # Container para garantir que os inputs fiquem alinhados
-                                with st.container():
-                                    col_n, col_d, col_b = st.columns([2.5, 1.2, 1.3])
-                                    
-                                    # Nome do novo filho
-                                    ed_f_nome = col_n.text_input(f"Nome Filho {i}", 
-                                                                placeholder="Digite o nome...",
-                                                                key=f"n_f_{i}_{idx}_{sufixo}", 
-                                                                label_visibility="collapsed")
-                                    
-                                    # Data de Nascimento (Inicia com a data de hoje para não vir valor fixo antigo)
-                                    ed_f_nasc = col_d.date_input("Nasc.", 
-                                                                value=date.today(), 
-                                                                key=f"d_f_{i}_{idx}_{sufixo}",
-                                                                label_visibility="collapsed")
-                                    
-                                    # Cálculo de idade reativo
-                                    idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
-                                    
-                                    # Lógica do Batismo baseada na data selecionada
-                                    if idade_nova < 18:
-                                        col_b.info(f"👶 {idade_nova} anos")
-                                        ed_f_bat = "Não Aplicável"
-                                    else:
-                                        ed_f_bat = col_b.selectbox("Batizado?", ["Sim", "Não"], 
-                                                                  key=f"b_f_{i}_{idx}_{sufixo}", 
-                                                                  label_visibility="collapsed")
-                                    
-                                    # Salva no dicionário temporário
-                                    novos_dados_filhos[f'nome_{i}'] = ed_f_nome
-                                    novos_dados_filhos[f'idade_{i}'] = idade_nova
-                                    novos_dados_filhos[f'bat_{i}'] = ed_f_bat
+                                # Criamos colunas internas para alinhar Nome, Data e Idade/Batismo
+                                ci1, ci2, ci3 = st.columns([2.5, 1.2, 1.3])
+                                
+                                ed_f_nome = ci1.text_input(f"Nome Filho {i}", placeholder="Nome...", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                
+                                # Cálculo de idade
+                                idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
+                                
+                                if idade_nova < 18:
+                                    ci3.info(f"👶 {idade_nova} anos")
+                                    ed_f_bat = "Não Aplicável"
+                                else:
+                                    ed_f_bat = ci3.selectbox(f"Bat.{i}", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                
+                                novos_dados_filhos[f'nome_{i}'] = ed_f_nome
+                                novos_dados_filhos[f'idade_{i}'] = idade_nova
+                                novos_dados_filhos[f'bat_{i}'] = ed_f_bat
                             else:
-                                # Se o checkbox não estiver marcado, mantém como Não Aplicável
+                                # Esta é a parte que causou o erro: agora ela tem conteúdo!
                                 novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
                                 novos_dados_filhos[f'idade_{i}'] = 0
                                 novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
+                                
 
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
