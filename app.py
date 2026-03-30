@@ -598,7 +598,7 @@ elif aba == "🔍 Consulta de Membros":
                                 
                                 # Inputs
                                 ed_f_nome = ci1.text_input(f"Nome Filho {i}", placeholder="Nome...", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                ed_f_nasc = ci2.date_input(f"Nasc.{i}", value=None, key=f"d_f_{i}_{idx}_{sufixo}", label_visibility="collapsed", format="DD/MM/YYYY")
+                                ed_f_nasc = ci2.date_input(f"Nasc.{i}",value=None,min_value=date(1900, 1, 1), max_value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}",label_visibility="collapsed", format="DD/MM/YYYY")
                                 
                                 # O 'if' deve estar alinhado com o 'ed_f_nasc' acima
                                 if ed_f_nasc is not None:
