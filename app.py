@@ -648,7 +648,7 @@ elif aba == "🔍 Consulta de Membros":
                 ed_pastor = st.selectbox("Pastor Responsável", lista_pastores, index=idx_pastor, key=f"pastor_{idx}_{sufixo}")    
                 ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']), key=f"obs_{idx}_{sufixo}")
                     
-                #with st.form(key=f"form_final_save_{idx}_{sufixo}"):
+                with st.form(key=f"form_final_save_{idx}_{sufixo}"):
                     b_save, b_canc = st.columns(2)
                     if b_save.form_submit_button("💾 Salvar Alterações", use_container_width=True):
                         # Lógica de salvamento igual a sua...
