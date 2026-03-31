@@ -633,11 +633,18 @@ elif aba == "🔍 Consulta de Membros":
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
                 st.write("---")
                 st.subheader("⛪ Igreja")
+                # Remova os espaços extras antes das linhas abaixo:
                 i1, i2 = st.columns(2)
-                ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
-                ed_pastor = i2.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], 
-                                         index=["Adriano", "Albert", "Luis", "Não Aplicável"].index(membro['Pastor Responsável']) if membro['Pastor Responsável'] in ["Adriano", "Albert", "Luis"] else 3)
-                ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']))
+                ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1, key=f"bat_mem_{idx}_{sufixo}")
+                
+                # Pastor Responsável (Ajustado para evitar erros de índice)
+                lista_pastores = ["Adriano", "Albert", "Luis", "Não Aplicável"]
+                pastor_atual = membro['Pastor Responsável']
+                idx_pastor = lista_pastores.index(pastor_atual) if pastor_atual in lista_pastores else 3
+                
+                ed_pastor = i2.selectbox("Pastor Responsável", lista_pastores, index=idx_pastor, key=f"pastor_{idx}_{sufixo}")
+                
+                ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']), key=f"obs_{idx}_{sufixo}")
                     
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
                     b_save, b_canc = st.columns(2)
