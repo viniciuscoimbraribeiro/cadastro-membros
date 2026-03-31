@@ -633,14 +633,13 @@ elif aba == "🔍 Consulta de Membros":
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
                 st.write("---")
                 st.subheader("⛪ Igreja")
-                    i1, i2 = st.columns(2)
-                    ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
-                    ed_pastor = i2.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], 
-                                             index=["Adriano", "Albert", "Luis", "Não Aplicável"].index(membro['Pastor Responsável']) if membro['Pastor Responsável'] in ["Adriano", "Albert", "Luis"] else 3)
-                    ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']))
+                i1, i2 = st.columns(2)
+                ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
+                ed_pastor = i2.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], 
+                                         index=["Adriano", "Albert", "Luis", "Não Aplicável"].index(membro['Pastor Responsável']) if membro['Pastor Responsável'] in ["Adriano", "Albert", "Luis"] else 3)
+                ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']))
                     
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
-
                     b_save, b_canc = st.columns(2)
                     if b_save.form_submit_button("💾 Salvar Alterações", use_container_width=True):
                         # Lógica de salvamento igual a sua...
