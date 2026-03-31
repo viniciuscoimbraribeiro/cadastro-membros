@@ -533,18 +533,26 @@ elif aba == "🔍 Consulta de Membros":
 
                 # 1. BLOCO PRINCIPAL (Identidade)
                 with st.container():
+                    # Linha 1: Nome e Profissão
                     col_n, col_p = st.columns(2)
                     ed_nome = col_n.text_input("Nome Completo", value=membro['Nome Completo'], key=f"ed_nome_{idx}_{sufixo}")
                     ed_prof = col_p.text_input("Profissão", value=tratar_campo(membro['Profissão']), key=f"ed_prof_{idx}_{sufixo}")
 
+                    # Linha 2: Estado Civil e Batismo do Membro
+                    c3, c4 = st.columns(2)
                     opcoes_civis = ["Casado(a)", "União Estável", "Divorciado(a)", "Viúvo(a)", "Solteiro(a)"]
                     estado_atual = membro['Estado Civil']
                     if estado_atual not in opcoes_civis: 
                         opcoes_civis.insert(0, estado_atual)
                     
-                    ed_civil = st.selectbox("Estado Civil", opcoes_civis, 
+                    ed_civil = c3.selectbox("Estado Civil", opcoes_civis, 
                                             index=opcoes_civis.index(estado_atual), 
                                             key=f"rel_civil_{idx}_{sufixo}")
+                                            
+                    # Status de Batismo movido para cá
+                    ed_bat_mem = c4.selectbox("Membro é Batizado?", ["Sim", "Não"], 
+                                             index=0 if membro['Batizado Membro'] == "Sim" else 1, 
+                                             key=f"bat_mem_{idx}_{sufixo}")
 
                 # 2. BLOCO DO CÔNJUGE (Dinâmico)
                 espaco_conjuge = st.container()
@@ -633,7 +641,6 @@ elif aba == "🔍 Consulta de Membros":
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
                 st.write("---")
                 st.subheader("⛪ Igreja")
-                # Remova os espaços extras antes das linhas abaixo:
                 i1, i2 = st.columns(2)
                 ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1, key=f"bat_mem_{idx}_{sufixo}")
                 
@@ -641,9 +648,7 @@ elif aba == "🔍 Consulta de Membros":
                 lista_pastores = ["Adriano", "Albert", "Luis", "Não Aplicável"]
                 pastor_atual = membro['Pastor Responsável']
                 idx_pastor = lista_pastores.index(pastor_atual) if pastor_atual in lista_pastores else 3
-                
-                ed_pastor = i2.selectbox("Pastor Responsável", lista_pastores, index=idx_pastor, key=f"pastor_{idx}_{sufixo}")
-                
+                ed_pastor = i2.selectbox("Pastor Responsável", lista_pastores, index=idx_pastor, key=f"pastor_{idx}_{sufixo}")    
                 ed_obs = st.text_area("Observações", value=tratar_campo(membro['Observações']), key=f"obs_{idx}_{sufixo}")
                     
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
