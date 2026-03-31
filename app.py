@@ -567,69 +567,69 @@ elif aba == "🔍 Consulta de Membros":
                     
 
                     # --- GESTÃO DE FILHOS (FORA DO FORM PARA FUNCIONAR O CHECKBOX) ---
-                    st.write("---")
-                    st.subheader("👨‍👩‍👧‍👦 Gestão de Filhos")
-                    novos_dados_filhos = {}
-                    from datetime import date
+                st.write("---")
+                st.subheader("👨‍👩‍👧‍👦 Gestão de Filhos")
+                novos_dados_filhos = {}
+                from datetime import date
 
-                    for i in range(1, 4):
-                        nome_f_orig = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
-                        c1, c2, c3 = st.columns([2.5, 1, 1.5])
+                for i in range(1, 4):
+                    nome_f_orig = tratar_campo(membro[f'Nome do Filho (a) - {i}'])
+                    c1, c2, c3 = st.columns([2.5, 1, 1.5])
 
-                        if nome_f_orig != "Não Aplicável":
-                            # --- FILHO JÁ EXISTENTE ---
-                            c1.markdown(f"**{i}. {nome_f_orig}**")
-                            idade_f = int(membro[f'Idade do Filho(a) - {i}'])
-                            c2.markdown(f" {idade_f} anos")
-                            
-                            if idade_f < 18:
-                                c3.caption("🚫 Menor de 18")
-                                novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
-                            else:
-                                bat_f_val = tratar_campo(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
-                                novos_dados_filhos[f'bat_{i}'] = c3.selectbox(f"Batizado?", ["Sim", "Não"], 
-                                    index=0 if bat_f_val == "Sim" else 1, 
-                                    key=f"bat_old_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                            
-                            novos_dados_filhos[f'nome_{i}'] = nome_f_orig
-                            novos_dados_filhos[f'idade_{i}'] = idade_f
+                    if nome_f_orig != "Não Aplicável":
+                        # --- FILHO JÁ EXISTENTE ---
+                        c1.markdown(f"**{i}. {nome_f_orig}**")
+                        idade_f = int(membro[f'Idade do Filho(a) - {i}'])
+                        c2.markdown(f" {idade_f} anos")
                         
+                        if idade_f < 18:
+                            c3.caption("🚫 Menor de 18")
+                            novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
                         else:
-                            # --- SLOT VAZIO (ADICIONAR NOVO) ---
-                            add_filho = c1.checkbox(f"➕ Adicionar Filho {i}", key=f"check_add_{i}_{idx}_{sufixo}")
+                            bat_f_val = tratar_campo(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
+                            novos_dados_filhos[f'bat_{i}'] = c3.selectbox(f"Batizado?", ["Sim", "Não"], 
+                                index=0 if bat_f_val == "Sim" else 1, 
+                                key=f"bat_old_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                        
+                        novos_dados_filhos[f'nome_{i}'] = nome_f_orig
+                        novos_dados_filhos[f'idade_{i}'] = idade_f
+                    
+                    else:
+                        # --- SLOT VAZIO (ADICIONAR NOVO) ---
+                        add_filho = c1.checkbox(f"➕ Adicionar Filho {i}", key=f"check_add_{i}_{idx}_{sufixo}")
+                        
+                        if add_filho:
+                            # Colunas para o novo filho
+                            ci1, ci2, ci3 = st.columns([2.5, 1.2, 1.3])
                             
-                            if add_filho:
-                                # Colunas para o novo filho
-                                ci1, ci2, ci3 = st.columns([2.5, 1.2, 1.3])
+                            # Inputs
+                            ed_f_nome = ci1.text_input(f"Nome Filho {i}", placeholder="Nome...", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                            ed_f_nasc = ci2.date_input(f"Nasc.{i}",value=None,min_value=date(1900, 1, 1), max_value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}",label_visibility="collapsed", format="DD/MM/YYYY")
+                            
+                            # O 'if' deve estar alinhado com o 'ed_f_nasc' acima
+                            if ed_f_nasc is not None:
+                                idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
                                 
-                                # Inputs
-                                ed_f_nome = ci1.text_input(f"Nome Filho {i}", placeholder="Nome...", key=f"n_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                ed_f_nasc = ci2.date_input(f"Nasc.{i}",value=None,min_value=date(1900, 1, 1), max_value=date.today(), key=f"d_f_{i}_{idx}_{sufixo}",label_visibility="collapsed", format="DD/MM/YYYY")
-                                
-                                # O 'if' deve estar alinhado com o 'ed_f_nasc' acima
-                                if ed_f_nasc is not None:
-                                    idade_nova = date.today().year - ed_f_nasc.year - ((date.today().month, date.today().day) < (ed_f_nasc.month, ed_f_nasc.day))
-                                    
-                                    if idade_nova < 18:
-                                        ci3.info(f"👶 {idade_nova} anos")
-                                        ed_f_bat = "Não Aplicável"
-                                    else:
-                                        ed_f_bat = ci3.selectbox(f"Bat.{i}", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
-                                    
-                                    novos_dados_filhos[f'nome_{i}'] = ed_f_nome
-                                    novos_dados_filhos[f'idade_{i}'] = idade_nova
-                                    novos_dados_filhos[f'bat_{i}'] = ed_f_bat
+                                if idade_nova < 18:
+                                    ci3.info(f"👶 {idade_nova} anos")
+                                    ed_f_bat = "Não Aplicável"
                                 else:
-                                    # Caso a data ainda não tenha sido escolhida
-                                    ci3.warning("Aguardando data...")
-                                    novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
-                                    novos_dados_filhos[f'idade_{i}'] = 0
-                                    novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
+                                    ed_f_bat = ci3.selectbox(f"Bat.{i}", ["Sim", "Não"], key=f"b_f_{i}_{idx}_{sufixo}", label_visibility="collapsed")
+                                
+                                novos_dados_filhos[f'nome_{i}'] = ed_f_nome
+                                novos_dados_filhos[f'idade_{i}'] = idade_nova
+                                novos_dados_filhos[f'bat_{i}'] = ed_f_bat
                             else:
-                                # Se o checkbox não estiver marcado
+                                # Caso a data ainda não tenha sido escolhida
+                                ci3.warning("Aguardando data...")
                                 novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
                                 novos_dados_filhos[f'idade_{i}'] = 0
-                                novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"                           
+                                novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
+                        else:
+                            # Se o checkbox não estiver marcado
+                            novos_dados_filhos[f'nome_{i}'] = "Não Aplicável"
+                            novos_dados_filhos[f'idade_{i}'] = 0
+                            novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"                           
 
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
