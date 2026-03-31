@@ -257,7 +257,7 @@ if aba == "📝 Novo Cadastro":
     st.subheader("⛪ Igreja")
     
     # 1. Batismo do Membro Principal
-    bat_membro = st.selectbox("Membro é Batizado?", ["Selecione...", "Sim", "Não"], key=f"bat_mem_principal_{fid}")
+    bat_membro = st.selectbox("", ["Selecione...", "Sim", "Não"], key=f"bat_mem_principal_{fid}")
     
     # 2. Batismo do Cônjuge (Depende do Estado Civil selecionado lá em cima)
     if estado_civil in ["Casado(a)", "União Estável"]:
@@ -547,7 +547,6 @@ elif aba == "🔍 Consulta de Membros":
                                             key=f"rel_civil_{idx}_{sufixo}")
 
                 # 2. BLOCO DO CÔNJUGE (Dinâmico)
-                # Criamos um container fixo para ele não flutuar sobre outros elementos
                 espaco_conjuge = st.container()
                 if ed_civil in ["Casado(a)", "União Estável"]:
                     with espaco_conjuge:
@@ -632,8 +631,11 @@ elif aba == "🔍 Consulta de Membros":
                             novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"                           
 
                 # --- SEGUNDO FORMULÁRIO (APENAS PARA O BOTÃO SALVAR) ---
+                st.write("---")
+                st.subheader("⛪ Igreja")
+                
                 with st.form(key=f"form_final_save_{idx}_{sufixo}"):
-                    st.write("---")
+
                     i1, i2 = st.columns(2)
                     ed_bat_mem = i1.selectbox("Membro é Batizado?", ["Sim", "Não"], index=0 if membro['Batizado Membro'] == "Sim" else 1)
                     ed_pastor = i2.selectbox("Pastor Responsável", ["Adriano", "Albert", "Luis", "Não Aplicável"], 
