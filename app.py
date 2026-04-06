@@ -295,10 +295,16 @@ if aba == "📝 Novo Cadastro":
             st.error("⚠️ Preencha os campos obrigatórios.")
         else:
             try:
+                # --- AJUSTE 1: Gerar o Stamp da Data ---
+                # Criamos a data atual formatada como DD/MM/YYYY
+                data_cadastro_stamp = datetime.datetime.now().strftime("%d/%m/%Y")
+
                 link_final = "Não Anexado"
                 if documento_file:
                     with st.spinner("Enviando documento..."):
-                        link_final = (nome, documento_file)
+                        #link_final = (nome, documento_file)
+                        link_final = upload_document_github(nome, documento_file)
+
 
                 # MONTAGEM DA LINHA - CONFERIR COM COLUNAS DO SHEETS
                 nova_linha = [
@@ -330,7 +336,13 @@ if aba == "📝 Novo Cadastro":
                     filhos_dados[2][3],               # Col Z (Batismo F3 - NOVA)
                     pastor,                           # Col AA
                     observacoes or "Não Aplicável",   # Col AB
-                    link_final                        # Col AC
+                    link_final,                       # Col AC
+                    "",                               # Col AD (29) - Vazio/Reserva
+                    "",                               # Col AE (30) - Vazio/Reserva
+                    "",                               # Col AF (31) - Vazio/Reserva
+                    "",                               # Col AG (32) - Vazio/Reserva
+                    data_cadastro_stamp               # Col AH (33) - O SEU STAMP AQUI!
+         
                 ]
 
                 salvar_na_planilha(nova_linha)
