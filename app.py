@@ -257,7 +257,7 @@ if aba == "📝 Novo Cadastro":
     st.subheader("⛪ Igreja")
     
     # 1. Batismo do Membro Principal
-    bat_membro = st.selectbox("O Membro é batizado?", ["Selecione...", "Sim", "Não"], key=f"bat_mem_principal_{fid}")
+    bat_membro = st.selectbox("O Membro é Batizado?", ["Selecione...", "Sim", "Não"], key=f"bat_mem_principal_{fid}")
     
     # 2. Batismo do Cônjuge (Depende do Estado Civil selecionado lá em cima)
     if estado_civil in ["Casado(a)", "União Estável"]:
