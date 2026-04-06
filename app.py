@@ -73,6 +73,12 @@ def upload_document_github(member_name, file):
     except Exception as e:
         st.error(f"Erro no upload para GitHub: {e}")
         return "Não Anexado"
+
+# --- MENU LATERAL ---
+with st.sidebar:
+    st.title("Navegação")
+    aba = st.radio("Ir para:", ["📝 Novo Cadastro", "🔍 Consulta", "🛠️ Catálogo", "📊 Estatísticas"])
+
 # --- ABA 1: CADASTRO ---
 if aba == "📝 Novo Cadastro":
     st.markdown("<h1 style='text-align: center;'>Cadastro de Membros</h1>", unsafe_allow_html=True)
