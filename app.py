@@ -302,7 +302,6 @@ if aba == "📝 Novo Cadastro":
                 link_final = "Não Anexado"
                 if documento_file:
                     with st.spinner("Enviando documento..."):
-                        #link_final = (nome, documento_file)
                         link_final = upload_document_github(nome, documento_file)
 
 
