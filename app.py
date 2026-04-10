@@ -167,6 +167,11 @@ if aba == "📝 Novo Cadastro":
             "Data de Nascimento (DD/MM/AAAA)", value=None, format="DD/MM/YYYY", min_value=datetime.date(1920, 1, 1), max_value=datetime.date.today(), key=f"nasc_{fid}"
         )        
         endereco = st.text_input("Endereço Completo", key=f"end_{fid}", autocomplete="address-line1")
+              # --- NOVO CAMPO DE TELEFONE ---
+        telefone_input = st.text_input("Telefone do Membro (com DDD)", key=f"tel_{fid}", help="Ex: 19999999999")
+        tel_txt = re.sub(r'\D', '', telefone_input) # Remove ( ) - e espaços
+
+        
         profissao = st.text_input("Profissão", key=f"prof_{fid}")
     
         # --- RG com trava e bloqueio reforçado de Autofill ---
@@ -340,7 +345,8 @@ if aba == "📝 Novo Cadastro":
                     "",                               # Col AE (30) - Vazio/Reserva
                     "",                               # Col AF (31) - Vazio/Reserva
                     "",                               # Col AG (32) - Vazio/Reserva
-                    data_cadastro_stamp               # Col AH (33) - O SEU STAMP AQUI!
+                    data_cadastro_stamp               # Col AH (33) - (Data do cadastro do Membro)
+                    tel_txt or "Não Informado"          # Col AI (34) - (Numero de Telefone)
          
                 ]
 
