@@ -345,8 +345,8 @@ if aba == "📝 Novo Cadastro":
                     "",                               # Col AE (30) - Vazio/Reserva
                     "",                               # Col AF (31) - Vazio/Reserva
                     "",                               # Col AG (32) - Vazio/Reserva
-                    data_cadastro_stamp               # Col AH (33) - (Data do cadastro do Membro)
-                    tel_txt or "Não Informado",       # Col AI (34) - (Numero de Telefone)
+                    data_cadastro_stamp,              # Col AH (33) - (Data do cadastro do Membro)
+                    tel_txt or "Não Informado"        # Col AI (34) - (Numero de Telefone)
          
                 ]
 
