@@ -341,12 +341,8 @@ if aba == "📝 Novo Cadastro":
                     pastor,                           # Col AA
                     observacoes or "Não Aplicável",   # Col AB
                     link_final,                       # Col AC
-                    "",                               # Col AD (29) - Vazio/Reserva
-                    "",                               # Col AE (30) - Vazio/Reserva
-                    "",                               # Col AF (31) - Vazio/Reserva
-                    "",                               # Col AG (32) - Vazio/Reserva
-                    data_cadastro_stamp,              # Col AH (33) - (Data do cadastro do Membro)
-                    tel_txt or "Não Informado"        # Col AI (34) - (Numero de Telefone)
+                    data_cadastro_stamp,              # Col AD (Data do cadastro do Membro)
+                    tel_txt or "Não Informado"        # Col AE (Numero de Telefone)
          
                 ]
 
@@ -493,7 +489,7 @@ elif aba == "🔍 Consulta de Membros":
                             
                         win.document.write('<h2>FICHA CADASTRAL DE MEMBRO</h2>');
                             
-                            // SEÇÃO 1: DADOS PESSOAIS
+                        // SEÇÃO 1: DADOS PESSOAIS
                         win.document.write('<div class="section"><span class="section-title">I. DADOS PESSOAIS</span>');
                         win.document.write('<div class="grid">');
                         win.document.write('<div><b>Nome:</b> {membro['Nome Completo']}</div>');
@@ -504,7 +500,7 @@ elif aba == "🔍 Consulta de Membros":
                         win.document.write('<div><b>Estado Civil:</b> {membro['Estado Civil']}</div>');
                         win.document.write('</div></div>');
                             
-                            // SEÇÃO 2: FAMÍLIA
+                        // SEÇÃO 2: FAMÍLIA
                         win.document.write('<div class="section"><span class="section-title">II. FAMÍLIA E FILHOS</span>');
                         win.document.write('<b>Cônjuge:</b> {conjuge}<br>');
                         if ("{conjuge}" != "Não Aplicável") {{win.document.write('<b>Profissão Cônjuge:</b> {tratar_campo(membro['Profissão Cônjuge'])}<br>');}}
@@ -583,14 +579,14 @@ elif aba == "🔍 Consulta de Membros":
                         ed_nasc_conj = f2.text_input("Nasc. Cônjuge (DD/MM/YYYY)", value=tratar_campo(membro['Data Nascimento Cônjuge']), key=f"ed_nasc_conj_{idx}_{sufixo}")
                         ed_prof_conj = f3.text_input("Profissão Cônjuge", value=tratar_campo(membro['Profissão Cônjuge']), key=f"ed_prof_c_{idx}_{sufixo}")
                         
-                        bat_conj_val = tratar_campo(membro.get('Cônjuge é Batizado?', "Não"))
+                        bat_conj_val = tratar_campo(membro.get('Batizado Cônjuge', "Não"))
                         ed_bat_conj = f4.selectbox("Cônjuge é Batizado?", ["Sim", "Não"], 
                                                    index=0 if bat_conj_val == "Sim" else 1, key=f"ed_bat_c_{idx}_{sufixo}")
                 else:
                     ed_conj, ed_nasc_conj, ed_prof_conj, ed_bat_conj = "Não Aplicável", "Não Aplicável", "Não Aplicável", "Não Aplicável"
                     
 
-                    # --- GESTÃO DE FILHOS (FORA DO FORM PARA FUNCIONAR O CHECKBOX) ---
+                # --- GESTÃO DE FILHOS (FORA DO FORM PARA FUNCIONAR O CHECKBOX) ---
                 st.write("---")
                 st.subheader("👨‍👩‍👧‍👦 Gestão de Filhos")
                 novos_dados_filhos = {}
@@ -610,7 +606,7 @@ elif aba == "🔍 Consulta de Membros":
                             c3.caption("🚫 Menor de 18")
                             novos_dados_filhos[f'bat_{i}'] = "Não Aplicável"
                         else:
-                            bat_f_val = tratar_campo(membro.get(f'Batismo Filho {i}', "Não Aplicável"))
+                            bat_f_val = tratar_campo(membro.get(f'Batizado Filho {i}', "Não Aplicável"))
                             novos_dados_filhos[f'bat_{i}'] = c3.selectbox(f"Batizado?", ["Sim", "Não"], 
                                 index=0 if bat_f_val == "Sim" else 1, 
                                 key=f"bat_old_{i}_{idx}_{sufixo}", label_visibility="collapsed")
@@ -678,12 +674,12 @@ elif aba == "🔍 Consulta de Membros":
                         df_contexto.at[idx, 'Nome Completo Conjuge'] = ed_conj
                         df_contexto.at[idx, 'Data Nascimento Cônjuge'] = ed_nasc_conj
                         df_contexto.at[idx, 'Profissão Cônjuge'] = ed_prof_conj
-                        df_contexto.at[idx, 'Cônjuge é Batizado?'] = ed_bat_conj
+                        df_contexto.at[idx, 'Batizado Cônjuge'] = ed_bat_conj
                         
                         for i in range(1, 4):
                             df_contexto.at[idx, f'Nome do Filho (a) - {i}'] = novos_dados_filhos[f'nome_{i}']
                             df_contexto.at[idx, f'Idade do Filho(a) - {i}'] = novos_dados_filhos[f'idade_{i}']
-                            df_contexto.at[idx, f'Batismo Filho {i}'] = novos_dados_filhos[f'bat_{i}']
+                            df_contexto.at[idx, f'Batizado Filho {i}'] = novos_dados_filhos[f'bat_{i}']
 
                         conn.update(data=df_contexto)
                         st.session_state[edit_key] = False
@@ -747,12 +743,10 @@ elif aba == "🛠️ Catálogo de Serviços":
     
     if st.button("🔎 Filtrar Profissionais", key="btn_filtro_catalogo", use_container_width=True):
         if prof_busca:
-            # Lendo os dados atualizados
             df = conn.read(ttl="10s")
-            
-            # Filtra pela Profissão (Coluna 3)
-            # Usamos .iloc[:, 3] para garantir que pegamos a coluna correta da planilha
-            encontrados = df[df.iloc[:, 3].astype(str).str.contains(prof_busca, case=False, na=False)]
+            termo_busca = normalizar(prof_busca)
+           # encontrados = df[df.iloc[:, 3].astype(str).str.contains(prof_busca, case=False, na=False)]
+            encontrados = df[df.iloc[:, 3].astype(str).apply(normalizar).str.contains(termo_busca, na=False)]
             
             if not encontrados.empty:
                 st.info(f"Encontramos {len(encontrados)} profissional(is):")
